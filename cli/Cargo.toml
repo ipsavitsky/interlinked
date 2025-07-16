@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+reqwest = { version = "0.12.22", features = ["json"] }
+shared = { version = "0.1.0", path = "../shared" }
+tokio = { version = "1.46.1", features = ["macros", "rt", "rt-multi-thread"] }
