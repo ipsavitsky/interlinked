@@ -8,6 +8,5 @@ name = "server"
 
 [dependencies]
 axum = { version = "0.8.4", features = ["macros"] }
-sha256 = "1.6.0"
 shared = { version = "0.1.0", path = "../shared" }
 tokio = { version = "1.46.1", features = ["macros", "net", "rt", "rt-multi-thread"] }

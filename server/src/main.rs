@@ -3,22 +3,22 @@ use axum::{
     extract::{Path, State},
     routing::{get, post},
 };
-use shared::NewRecord;
-use sha256::digest;
+use shared::{NewRecord, get_hash};
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
+    collections::HashMap, sync::{Arc, Mutex}
 };
 
 #[derive(Clone)]
 struct AppState {
     cache: Arc<Mutex<HashMap<String, String>>>,
+    current_difficulty: usize,
 }
 
 impl AppState {
     fn new() -> AppState {
         AppState {
             cache: Arc::new(Mutex::new(HashMap::new())),
+            current_difficulty: 5,
         }
     }
 }
@@ -27,6 +27,7 @@ impl AppState {
 async fn main() {
     let state = AppState::new();
     let app = Router::new()
+        .route("/difficulty", get(difficulty_handler))
         .route("/{id}", get(handler))
         .route("/", post(new_link_handler))
         .with_state(state);
@@ -36,6 +37,10 @@ async fn main() {
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn difficulty_handler(State(state): State<AppState>) -> String {
+    state.current_difficulty.to_string()
 }
 
 #[debug_handler]
@@ -48,8 +53,9 @@ async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> Strin
 
 #[debug_handler]
 async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecord>) -> String {
-    let hash = digest(body.challange.clone());
-    if !hash.starts_with("000") {
+    let hash = get_hash(&body.challange);
+    let hash_prefix = "0".repeat(state.current_difficulty);
+    if !hash.starts_with(&hash_prefix) {
         "Hash does not compute!".to_string()
     } else {
         state

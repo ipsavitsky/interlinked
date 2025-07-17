@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sha256::digest;
 
 #[derive(Serialize, Deserialize)]
 pub struct NewRecord {
@@ -6,6 +7,6 @@ pub struct NewRecord {
     pub challange: String,
 }
 
-// pub fn get_hash(in: String) -> String {
-
-// }
+pub fn get_hash(in_str: &str) -> String {
+    digest(in_str)
+}
