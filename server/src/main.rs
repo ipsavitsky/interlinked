@@ -5,7 +5,8 @@ use axum::{
 };
 use shared::{NewRecord, get_hash};
 use std::{
-    collections::HashMap, sync::{Arc, Mutex}
+    collections::HashMap,
+    sync::{Arc, Mutex},
 };
 
 #[derive(Clone)]
@@ -18,7 +19,7 @@ impl AppState {
     fn new() -> AppState {
         AppState {
             cache: Arc::new(Mutex::new(HashMap::new())),
-            current_difficulty: 5,
+            current_difficulty: 3,
         }
     }
 }
@@ -53,7 +54,7 @@ async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> Strin
 
 #[debug_handler]
 async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecord>) -> String {
-    let hash = get_hash(&body.challange);
+    let hash = get_hash(&body.challenge);
     let hash_prefix = "0".repeat(state.current_difficulty);
     if !hash.starts_with(&hash_prefix) {
         "Hash does not compute!".to_string()

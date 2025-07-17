@@ -1,17 +1,15 @@
+use anyhow::Result;
 use rand::{Rng, distr::Alphanumeric};
 use shared::{NewRecord, get_hash};
 
-async fn get_difficulty() -> usize {
-    reqwest::Client::new()
+async fn get_difficulty() -> Result<usize> {
+    Ok(reqwest::Client::new()
         .get("http://localhost:3000/difficulty")
         .send()
-        .await
-        .unwrap()
+        .await?
         .text()
-        .await
-        .unwrap()
-        .parse()
-        .unwrap()
+        .await?
+        .parse()?)
 }
 
 fn make_random_string() -> String {
@@ -22,26 +20,29 @@ fn make_random_string() -> String {
         .collect()
 }
 
-async fn come_up_with_solution() -> String {
-    let difficulty = get_difficulty().await;
+async fn come_up_with_solution() -> Result<String> {
+    let difficulty = get_difficulty().await?;
+    println!("Solving challenge with difficulty {difficulty}");
     let prefix_string = "0".repeat(difficulty);
     loop {
         let attempt = make_random_string();
         if get_hash(&attempt).starts_with(&prefix_string) {
-            return attempt;
+            return Ok(attempt);
         }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    let challange = come_up_with_solution().await;
+    let challenge = come_up_with_solution()
+        .await
+        .expect("Could not get challenge difficulty from server");
 
-    println!("solved challange! {challange}: {}", get_hash(&challange));
+    println!("solved challange! {challenge}: {}", get_hash(&challenge));
 
     let new_record = NewRecord {
         payload: "hello world".to_string(),
-        challange,
+        challenge,
     };
 
     let resp = reqwest::Client::new()
