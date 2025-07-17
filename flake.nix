@@ -13,17 +13,23 @@
           inherit system;
           overlays = [ (import rust-overlay) ];
         };
+        rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
         naersk-lib = pkgs.callPackage naersk {
-          cargo = pkgs.rust-bin.stable.latest.default;
-          rustc = pkgs.rust-bin.stable.latest.default;
+          cargo = rustToolchain;
+          rustc = rustToolchain;
         };
-
       in
       {
-        defaultPackage = naersk-lib.buildPackage ./.;
+        packages = rec {
+          default = interlinked;
+          interlinked = naersk-lib.buildPackage {
+            src = ./.;
+            buildInputs = with pkgs; [ sqlite ];
+          };
+        };
         devShell = with pkgs; mkShell {
           buildInputs = [
-            rust-bin.stable.latest.default
+            rustToolchain
             diesel-cli
             lazysql
             sqlite
