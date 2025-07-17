@@ -73,6 +73,14 @@ async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecordSch
     use self::schema::records;
     let hash = get_hash(&body.challenge);
     let hash_prefix = "0".repeat(state.current_difficulty);
+    if !records::dsl::records
+        .filter(records::dsl::challenge_proof.eq(body.challenge.clone()))
+        .select(Record::as_select())
+        .load(&mut *state.db.lock().unwrap())
+        .expect("Could not query for existing proofs")
+        .is_empty() {
+            return "Proof already used! Try again".to_string();
+        }
     if !hash.starts_with(&hash_prefix) {
         "Hash does not compute!".to_string()
     } else {
