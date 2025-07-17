@@ -3,22 +3,29 @@ use axum::{
     extract::{Path, State},
     routing::{get, post},
 };
-use shared::{NewRecord, get_hash};
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use diesel::prelude::*;
+use shared::{NewRecordScheme, get_hash};
+use std::sync::{Arc, Mutex};
+
+use crate::models::{NewRecord, Record};
+
+pub mod models;
+pub mod schema;
+
+fn establish_connection() -> SqliteConnection {
+    SqliteConnection::establish("db/main.db").expect("cannot connect to db")
+}
 
 #[derive(Clone)]
 struct AppState {
-    cache: Arc<Mutex<HashMap<String, String>>>,
+    db: Arc<Mutex<SqliteConnection>>,
     current_difficulty: usize,
 }
 
 impl AppState {
     fn new() -> AppState {
         AppState {
-            cache: Arc::new(Mutex::new(HashMap::new())),
+            db: Arc::new(Mutex::new(establish_connection())),
             current_difficulty: 3,
         }
     }
@@ -46,24 +53,39 @@ async fn difficulty_handler(State(state): State<AppState>) -> String {
 
 #[debug_handler]
 async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> String {
-    match state.cache.lock().unwrap().get(&id) {
-        Some(p) => p.to_string(),
+    use self::schema::records::dsl::{id as table_id, records};
+    let id_num = id.parse::<i32>().unwrap();
+    let selected_record = records
+        .filter(table_id.eq(id_num))
+        .select(Record::as_select())
+        .first(&mut *state.db.lock().unwrap())
+        .optional()
+        .expect("failed to load record");
+
+    match selected_record {
+        Some(rec) => rec.redirect_url.to_string(),
         None => format!("record with id {id} not found"),
     }
 }
 
 #[debug_handler]
-async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecord>) -> String {
+async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecordScheme>) -> String {
+    use self::schema::records;
     let hash = get_hash(&body.challenge);
     let hash_prefix = "0".repeat(state.current_difficulty);
     if !hash.starts_with(&hash_prefix) {
         "Hash does not compute!".to_string()
     } else {
-        state
-            .cache
-            .lock()
-            .unwrap()
-            .insert("1".to_string(), body.payload.clone());
-        "1".to_string()
+        let values = NewRecord {
+            redirect_url: &body.payload,
+            challenge_proof: &body.challenge
+        };
+        diesel::insert_into(records::table)
+            .values(values)
+            .returning(Record::as_returning())
+            .get_result(&mut *state.db.lock().unwrap())
+            .expect("failed writing record")
+            .id
+            .to_string()
     }
 }

@@ -1,6 +1,6 @@
 use anyhow::Result;
 use rand::{Rng, distr::Alphanumeric};
-use shared::{NewRecord, get_hash};
+use shared::{NewRecordScheme, get_hash};
 
 async fn get_difficulty() -> Result<usize> {
     Ok(reqwest::Client::new()
@@ -38,9 +38,9 @@ async fn main() {
         .await
         .expect("Could not get challenge difficulty from server");
 
-    println!("solved challange! {challenge}: {}", get_hash(&challenge));
+    println!("solved challenge! {challenge}: {}", get_hash(&challenge));
 
-    let new_record = NewRecord {
+    let new_record = NewRecordScheme {
         payload: "hello world".to_string(),
         challenge,
     };

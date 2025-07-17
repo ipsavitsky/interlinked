@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use sha256::digest;
 
 #[derive(Serialize, Deserialize)]
-pub struct NewRecord {
+pub struct NewRecordScheme {
     pub payload: String,
     pub challenge: String,
 }

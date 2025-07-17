@@ -1,0 +1,5 @@
+CREATE TABLE records (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  challenge_proof TEXT NOT NULL,
+  redirect_url TEXT NOT NULL
+)
