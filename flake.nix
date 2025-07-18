@@ -37,6 +37,8 @@
             pkg-config
             openssl
             nil
+            wasm-pack
+            bun
           ];
         };
       }

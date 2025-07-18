@@ -1,7 +1,6 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use rand::{Rng, distr::Alphanumeric};
-use shared::{NewRecordScheme, get_hash};
+use shared::{NewRecordScheme, come_up_with_solution};
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -30,32 +29,9 @@ async fn get_difficulty() -> Result<usize> {
         .parse()?)
 }
 
-fn make_random_string() -> String {
-    rand::rng()
-        .sample_iter(&Alphanumeric)
-        .take(70)
-        .map(char::from)
-        .collect()
-}
-
-async fn come_up_with_solution() -> Result<String> {
-    let difficulty = get_difficulty().await?;
-    println!("Solving challenge with difficulty {difficulty}");
-    let prefix_string = "0".repeat(difficulty);
-    loop {
-        let attempt = make_random_string();
-        if get_hash(&attempt).starts_with(&prefix_string) {
-            return Ok(attempt);
-        }
-    }
-}
-
 async fn new(payload: String) {
-    let challenge = come_up_with_solution()
-        .await
-        .expect("Could not get challenge difficulty from server");
-
-    println!("solved challenge! {challenge}: {}", get_hash(&challenge));
+    let difficulty = get_difficulty().await.expect("Could not query difficulty");
+    let (challenge, _) = come_up_with_solution(difficulty);
 
     let new_record = NewRecordScheme {
         payload,
