@@ -4,6 +4,7 @@ use axum::{
     routing::{get, post},
 };
 use diesel::prelude::*;
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use shared::{NewRecordScheme, get_hash};
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
@@ -13,8 +14,13 @@ use crate::models::{NewRecord, Record};
 pub mod models;
 pub mod schema;
 
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
 fn establish_connection() -> SqliteConnection {
-    SqliteConnection::establish("db/main.db").expect("cannot connect to db")
+    let mut conn = SqliteConnection::establish("db/main.db").expect("cannot connect to db");
+    conn.run_pending_migrations(MIGRATIONS)
+        .expect("failed to run migrations");
+    conn
 }
 
 #[derive(Clone)]
