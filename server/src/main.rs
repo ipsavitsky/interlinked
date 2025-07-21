@@ -1,6 +1,7 @@
 use axum::{
     Json, Router, debug_handler,
     extract::{Path, State},
+    http::{HeaderMap, header},
     routing::{get, post},
 };
 use diesel::prelude::*;
@@ -33,7 +34,7 @@ impl AppState {
     fn new() -> AppState {
         AppState {
             db: Arc::new(Mutex::new(establish_connection())),
-            current_difficulty: 3,
+            current_difficulty: 2,
         }
     }
 }
@@ -41,7 +42,7 @@ impl AppState {
 #[tokio::main]
 async fn main() {
     let state = AppState::new();
-    let cors = CorsLayer::new().allow_origin(Any);
+    let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
     let app = Router::new()
         .route("/difficulty", get(difficulty_handler))
         .route("/{id}", get(handler))
@@ -61,7 +62,11 @@ async fn difficulty_handler(State(state): State<AppState>) -> String {
 }
 
 #[debug_handler]
-async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> String {
+async fn handler(
+    Path(id): Path<String>,
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> impl axum::response::IntoResponse {
     use self::schema::records::dsl::{id as table_id, records};
     let id_num = id.parse::<i32>().unwrap();
     let selected_record = records
@@ -72,8 +77,30 @@ async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> Strin
         .expect("failed to load record");
 
     match selected_record {
-        Some(rec) => rec.redirect_url.to_string(),
-        None => format!("record with id {id} not found"),
+        Some(rec) => {
+            if let Some(accept_header) = headers.get(header::ACCEPT) {
+                if let Ok(accept_str) = accept_header.to_str() {
+                    if accept_str.contains("text/html") {
+                        let mut redirect_url = rec.redirect_url.clone();
+                        if !redirect_url.starts_with("http://") && !redirect_url.starts_with("https://") {
+                            redirect_url = format!("http://{}", redirect_url);
+                        }
+                        return axum::response::Response::builder()
+                            .status(302)
+                            .header(header::LOCATION, redirect_url)
+                            .body(axum::body::Body::empty())
+                            .unwrap();
+                    }
+                }
+            }
+            axum::response::Response::new(axum::body::Body::from(rec.redirect_url))
+        }
+        None => axum::response::Response::builder()
+            .status(404)
+            .body(axum::body::Body::from(format!(
+                "record with id {id} not found"
+            )))
+            .unwrap(),
     }
 }
 

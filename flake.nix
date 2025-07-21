@@ -40,6 +40,7 @@
             wasm-bindgen-cli
             miniserve
             just
+            opencode
           ];
         };
       }
