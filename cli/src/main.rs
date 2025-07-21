@@ -1,22 +1,21 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use shared::{NewRecordScheme, come_up_with_solution};
+use std::time::SystemTime;
 
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {
+    #[arg(short, long)]
+    verbose: bool,
     #[command(subcommand)]
-    command: Commands
+    command: Commands,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    New {
-        link: String
-    },
-    Resolve {
-        id: String
-    }
+    New { link: String },
+    Resolve { id: String },
 }
 
 async fn get_difficulty() -> Result<usize> {
@@ -31,12 +30,13 @@ async fn get_difficulty() -> Result<usize> {
 
 async fn new(payload: String) {
     let difficulty = get_difficulty().await.expect("Could not query difficulty");
-    let (challenge, _) = come_up_with_solution(difficulty);
+    let seed = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .expect("Could not seed rng")
+        .as_secs();
+    let (challenge, _) = come_up_with_solution(difficulty, seed);
 
-    let new_record = NewRecordScheme {
-        payload,
-        challenge,
-    };
+    let new_record = NewRecordScheme { payload, challenge };
 
     let data = reqwest::Client::new()
         .post("http://localhost:3000")

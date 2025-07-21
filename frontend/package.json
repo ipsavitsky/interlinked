@@ -1,18 +1,7 @@
 {
-  "name": "interlinked-web",
-  "version": "0.1.0",
-  "main": "index.js",
-  "scripts": {
-    "dev": "vite dev",
-    "build": "wasm-pack build --target web",
-    "predev": "bun run build"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "vite": "^7.0.5",
-    "vite-plugin-wasm": "^3.5.0",
-    "vite-plugin-top-level-await": "^1.6.0"
-  },
-  "dependencies": {
-    "frontend": "./pkg"
+    "@types/bun": "^1.2.19",
+    "prettier": "^3.6.2"
   }
 }

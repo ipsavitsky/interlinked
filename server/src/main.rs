@@ -6,6 +6,7 @@ use axum::{
 use diesel::prelude::*;
 use shared::{NewRecordScheme, get_hash};
 use std::sync::{Arc, Mutex};
+use tower_http::cors::{Any, CorsLayer};
 
 use crate::models::{NewRecord, Record};
 
@@ -34,10 +35,12 @@ impl AppState {
 #[tokio::main]
 async fn main() {
     let state = AppState::new();
+    let cors = CorsLayer::new().allow_origin(Any);
     let app = Router::new()
         .route("/difficulty", get(difficulty_handler))
         .route("/{id}", get(handler))
         .route("/", post(new_link_handler))
+        .layer(cors)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
@@ -78,15 +81,16 @@ async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecordSch
         .select(Record::as_select())
         .load(&mut *state.db.lock().unwrap())
         .expect("Could not query for existing proofs")
-        .is_empty() {
-            return "Proof already used! Try again".to_string();
-        }
+        .is_empty()
+    {
+        return "Proof already used! Try again".to_string();
+    }
     if !hash.starts_with(&hash_prefix) {
         "Hash does not compute!".to_string()
     } else {
         let values = NewRecord {
             redirect_url: &body.payload,
-            challenge_proof: &body.challenge
+            challenge_proof: &body.challenge,
         };
         diesel::insert_into(records::table)
             .values(values)

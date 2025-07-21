@@ -33,12 +33,13 @@
             diesel-cli
             lazysql
             sqlite
-            rust-analyzer
             pkg-config
             openssl
             nil
-            wasm-pack
             bun
+            wasm-bindgen-cli
+            miniserve
+            just
           ];
         };
       }

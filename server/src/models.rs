@@ -4,7 +4,7 @@ use diesel::prelude::*;
 #[diesel(table_name = crate::schema::records)]
 pub struct NewRecord<'a> {
     pub redirect_url: &'a str,
-    pub challenge_proof: &'a str
+    pub challenge_proof: &'a str,
 }
 
 #[derive(Queryable, Selectable)]
