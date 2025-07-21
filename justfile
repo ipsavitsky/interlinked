@@ -10,3 +10,9 @@ generate_bindings: build
 create_db:
     mkdir -p db
     diesel migration run
+
+serve_backend:
+  cargo run --bin server
+
+serve_frontend:
+  miniserve frontend --port 3001
