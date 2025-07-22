@@ -38,7 +38,6 @@
             nil
             bun
             wasm-bindgen-cli
-            miniserve
             just
             opencode
           ];

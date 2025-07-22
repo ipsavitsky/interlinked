@@ -10,6 +10,7 @@ name = "server"
 axum = { version = "0.8.4", features = ["macros"] }
 diesel = { version = "2.2.12", features = ["sqlite", "returning_clauses_for_sqlite_3_35"] }
 diesel_migrations = { version = "2.2.0", features = ["sqlite"] }
+dotenvy = "0.15.7"
 shared = { version = "0.1.0", path = "../shared" }
 tokio = { version = "1.46.1", features = ["macros", "net", "rt", "rt-multi-thread"] }
 tower-http = { version = "0.6.6", features = ["cors"] }

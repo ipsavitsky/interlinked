@@ -13,14 +13,15 @@ async function run() {
   resultContainer.textContent = "Solving challenge...";
 
   console.log("starting...");
-  const response = await fetch("http://localhost:3000/difficulty");
+  const url = window.BACKEND_URL;
+  const response = await fetch(`${url}/difficulty`);
   const difficulty = Number(await response.text());
   console.log("calculating solution with difficulty", difficulty);
   const result = solution_wrapper(difficulty, BigInt(Date.now()));
   console.log("solution calculated:", result);
 
   try {
-    const writeResponse = await fetch("http://localhost:3000/", {
+    const writeResponse = await fetch(`${url}/`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -31,12 +32,16 @@ async function run() {
       }),
     });
     if (writeResponse.status != 200) {
-      console.error("Error writing record: returned code", writeResponse.status);
-      resultContainer.textContent = "Error writing record. " + (await writeResponse.text());
-      return
+      console.error(
+        "Error writing record: returned code",
+        writeResponse.status,
+      );
+      resultContainer.textContent =
+        "Error writing record. " + (await writeResponse.text());
+      return;
     }
     const recordId = await writeResponse.text();
-    const shortenedLink = `http://localhost:3000/${recordId}`;
+    const shortenedLink = `${url}/${recordId}`;
     resultContainer.innerHTML = `
       <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>
     `;
@@ -49,7 +54,8 @@ async function run() {
 async function fetchDifficulty() {
   const difficultyContainer = document.getElementById("difficulty-container");
   try {
-    const response = await fetch("http://localhost:3000/difficulty");
+    const url = window.BACKEND_URL;
+    const response = await fetch(`${url}/difficulty`);
     const difficulty = await response.text();
     difficultyContainer.textContent = `Current difficulty: ${difficulty}`;
   } catch (error) {

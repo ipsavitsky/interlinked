@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.41", features = ["derive"] }
+dotenvy = "0.15.7"
 rand = "0.9.1"
 reqwest = { version = "0.12.22", features = ["json"] }
 shared = { version = "0.1.0", path = "../shared" }

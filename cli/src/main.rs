@@ -1,8 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use dotenvy::dotenv;
 use shared::{NewRecordScheme, come_up_with_solution};
-use url::Url;
+use std::env;
 use std::time::SystemTime;
+use url::Url;
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -19,9 +21,9 @@ enum Commands {
     Resolve { id: String },
 }
 
-async fn get_difficulty() -> Result<usize> {
+async fn get_difficulty(backend_url: &str) -> Result<usize> {
     Ok(reqwest::Client::new()
-        .get("http://localhost:3000/difficulty")
+        .get(format!("{}/difficulty", backend_url))
         .send()
         .await?
         .text()
@@ -29,8 +31,10 @@ async fn get_difficulty() -> Result<usize> {
         .parse()?)
 }
 
-async fn new(payload_str: String) -> Result<()> {
-    let difficulty = get_difficulty().await.expect("Could not query difficulty");
+async fn new(payload_str: String, backend_url: &str) -> Result<()> {
+    let difficulty = get_difficulty(backend_url)
+        .await
+        .expect("Could not query difficulty");
     let seed = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Could not seed rng")
@@ -42,20 +46,20 @@ async fn new(payload_str: String) -> Result<()> {
     let new_record = NewRecordScheme { payload, challenge };
 
     let data = reqwest::Client::new()
-        .post("http://localhost:3000")
+        .post(backend_url)
         .json(&new_record)
         .send()
         .await?
         .text()
         .await?;
 
-    println!("http://localhost:3000/{data}");
+    println!("{backend_url}/{data}");
     Ok(())
 }
 
-async fn resolve(id: String) -> Result<()> {
+async fn resolve(id: String, backend_url: &str) -> Result<()> {
     let data = reqwest::Client::new()
-        .get(format!("http://localhost:3000/{id}"))
+        .get(format!("{backend_url}/{id}"))
         .send()
         .await?
         .text()
@@ -66,11 +70,13 @@ async fn resolve(id: String) -> Result<()> {
 }
 
 #[tokio::main]
-async fn main() -> Result<()>{
+async fn main() -> Result<()> {
+    dotenv().ok();
+    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000".to_string());
     let args = Args::parse();
 
     match args.command {
-        Commands::New { link } => new(link).await,
-        Commands::Resolve { id } => resolve(id).await,
+        Commands::New { link } => new(link, &backend_url).await,
+        Commands::Resolve { id } => resolve(id, &backend_url).await,
     }
 }

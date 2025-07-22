@@ -7,7 +7,9 @@ use axum::{
 };
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use dotenvy::dotenv;
 use shared::{NewRecordScheme, get_hash};
+use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
 
@@ -18,8 +20,8 @@ pub mod schema;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
-fn establish_connection() -> SqliteConnection {
-    let mut conn = SqliteConnection::establish("db/main.db").expect("cannot connect to db");
+fn establish_connection(db_url: &str) -> SqliteConnection {
+    let mut conn = SqliteConnection::establish(db_url).expect("cannot connect to db");
     conn.run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
     conn
@@ -32,17 +34,24 @@ struct AppState {
 }
 
 impl AppState {
-    fn new() -> AppState {
+    fn new(db_url: &str, difficulty: usize) -> AppState {
         AppState {
-            db: Arc::new(Mutex::new(establish_connection())),
-            current_difficulty: 2,
+            db: Arc::new(Mutex::new(establish_connection(db_url))),
+            current_difficulty: difficulty,
         }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    let state = AppState::new();
+    dotenv().ok();
+    let db_url = env::var("DATABASE_URL").unwrap_or("../db/main.db".to_string());
+    let port = env::var("PORT").unwrap_or("3000".to_string());
+    let difficulty = env::var("DIFFICULTY")
+        .unwrap_or("1".to_string())
+        .parse::<usize>()
+        .unwrap();
+    let state = AppState::new(&db_url, difficulty);
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
     let app = Router::new()
         .route("/difficulty", get(difficulty_handler))
@@ -51,7 +60,7 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
         .await
         .unwrap();
     println!("listening on {}", listener.local_addr().unwrap());

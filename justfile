@@ -15,4 +15,4 @@ serve_backend:
   cargo run --bin server
 
 serve_frontend:
-  miniserve frontend --port 3001
+  bun run --cwd frontend dev
