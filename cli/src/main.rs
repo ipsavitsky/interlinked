@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use shared::{NewRecordScheme, come_up_with_solution};
+use url::Url;
 use std::time::SystemTime;
 
 #[derive(Parser)]
@@ -28,7 +29,7 @@ async fn get_difficulty() -> Result<usize> {
         .parse()?)
 }
 
-async fn new(payload: String) {
+async fn new(payload_str: String) -> Result<()> {
     let difficulty = get_difficulty().await.expect("Could not query difficulty");
     let seed = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -36,36 +37,36 @@ async fn new(payload: String) {
         .as_secs();
     let (challenge, _) = come_up_with_solution(difficulty, seed);
 
+    let payload = Url::parse(&payload_str)?;
+
     let new_record = NewRecordScheme { payload, challenge };
 
     let data = reqwest::Client::new()
         .post("http://localhost:3000")
         .json(&new_record)
         .send()
-        .await
-        .unwrap()
+        .await?
         .text()
-        .await
-        .unwrap();
+        .await?;
 
-    println!("{data}");
+    println!("http://localhost:3000/{data}");
+    Ok(())
 }
 
-async fn resolve(id: String) {
+async fn resolve(id: String) -> Result<()> {
     let data = reqwest::Client::new()
         .get(format!("http://localhost:3000/{id}"))
         .send()
-        .await
-        .unwrap()
+        .await?
         .text()
-        .await
-        .unwrap();
+        .await?;
 
     println!("{data}");
+    Ok(())
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()>{
     let args = Args::parse();
 
     match args.command {

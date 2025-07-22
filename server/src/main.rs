@@ -1,7 +1,8 @@
 use axum::{
     Json, Router, debug_handler,
     extract::{Path, State},
-    http::{HeaderMap, header},
+    http::{HeaderMap, StatusCode, header},
+    response::IntoResponse,
     routing::{get, post},
 };
 use diesel::prelude::*;
@@ -82,7 +83,9 @@ async fn handler(
                 if let Ok(accept_str) = accept_header.to_str() {
                     if accept_str.contains("text/html") {
                         let mut redirect_url = rec.redirect_url.clone();
-                        if !redirect_url.starts_with("http://") && !redirect_url.starts_with("https://") {
+                        if !redirect_url.starts_with("http://")
+                            && !redirect_url.starts_with("https://")
+                        {
                             redirect_url = format!("http://{}", redirect_url);
                         }
                         return axum::response::Response::builder()
@@ -105,7 +108,10 @@ async fn handler(
 }
 
 #[debug_handler]
-async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecordScheme>) -> String {
+async fn new_link_handler(
+    State(state): State<AppState>,
+    body: Json<NewRecordScheme>,
+) -> impl IntoResponse {
     use self::schema::records;
     let hash = get_hash(&body.challenge);
     let hash_prefix = "0".repeat(state.current_difficulty);
@@ -116,21 +122,28 @@ async fn new_link_handler(State(state): State<AppState>, body: Json<NewRecordSch
         .expect("Could not query for existing proofs")
         .is_empty()
     {
-        return "Proof already used! Try again".to_string();
+        return (
+            StatusCode::CONFLICT,
+            "Proof already used! Try again".to_string(),
+        );
     }
     if !hash.starts_with(&hash_prefix) {
-        "Hash does not compute!".to_string()
+        (
+            StatusCode::BAD_REQUEST,
+            "Hash does not compute!".to_string(),
+        )
     } else {
         let values = NewRecord {
-            redirect_url: &body.payload,
+            redirect_url: body.payload.as_ref(),
             challenge_proof: &body.challenge,
         };
-        diesel::insert_into(records::table)
+        let new_id = diesel::insert_into(records::table)
             .values(values)
             .returning(Record::as_returning())
             .get_result(&mut *state.db.lock().unwrap())
             .expect("failed writing record")
             .id
-            .to_string()
+            .to_string();
+        (StatusCode::OK, new_id)
     }
 }

@@ -6,7 +6,7 @@ const ALPHABET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01
 
 #[derive(Serialize, Deserialize)]
 pub struct NewRecordScheme {
-    pub payload: String,
+    pub payload: url::Url,
     pub challenge: String,
 }
 

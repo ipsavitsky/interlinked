@@ -249,6 +249,7 @@ dependencies = [
  "reqwest",
  "shared",
  "tokio",
+ "url",
 ]
 
 [[package]]
@@ -1389,6 +1390,7 @@ dependencies = [
  "serde",
  "tinyrand",
  "tinyrand-std",
+ "url",
 ]
 
 [[package]]
@@ -1752,6 +1754,7 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]

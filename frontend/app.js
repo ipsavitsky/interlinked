@@ -30,6 +30,11 @@ async function run() {
         challenge: result,
       }),
     });
+    if (writeResponse.status != 200) {
+      console.error("Error writing record: returned code", writeResponse.status);
+      resultContainer.textContent = "Error writing record. " + (await writeResponse.text());
+      return
+    }
     const recordId = await writeResponse.text();
     const shortenedLink = `http://localhost:3000/${recordId}`;
     resultContainer.innerHTML = `
