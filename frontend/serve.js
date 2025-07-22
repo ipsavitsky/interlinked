@@ -14,6 +14,13 @@ Bun.serve({
       reqPath = "/index.html";
     }
 
+    if (reqPath === "/config.js") {
+      const configContent = `window.BACKEND_URL = "${backendUrl}";`;
+      return new Response(configContent, {
+        headers: { "Content-Type": "application/javascript" },
+      });
+    }
+
     const filePath = import.meta.dir + reqPath;
 
     try {
