@@ -39,7 +39,6 @@
             bun
             wasm-bindgen-cli
             just
-            opencode
           ];
         };
       }

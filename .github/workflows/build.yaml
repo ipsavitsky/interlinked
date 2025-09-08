@@ -1,0 +1,11 @@
+name: build
+
+on: [workflow_call]
+
+jobs:
+  nix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: DeterminateSystems/nix-installer-action@v19
+      - run: nix build
