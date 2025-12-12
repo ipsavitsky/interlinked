@@ -37,7 +37,7 @@
             openssl
             nil
             bun
-            wasm-bindgen-cli
+            wasm-bindgen-cli_0_2_100
             just
           ];
         };
