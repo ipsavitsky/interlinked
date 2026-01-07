@@ -3,4 +3,4 @@ cargo-features = ["per-package-target"]
 [workspace]
 resolver = "2"
 
-members = [ "cli", "frontend","server", "shared" ]
+members = [ "cli", "frontend", "server", "shared" ]

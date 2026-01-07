@@ -3,9 +3,9 @@
     "dev": "bun --hot --env-file=./.env serve.js",
     "fmt": "prettier -w ."
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/bun": "^1.2.19",
+    "bun2nix": "^2.0.6",
     "prettier": "^3.6.2"
   }
 }
