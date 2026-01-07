@@ -82,6 +82,7 @@
             bun
             wasm-bindgen-cli_0_2_100
             just
+            cargo-machete
           ];
         };
       }

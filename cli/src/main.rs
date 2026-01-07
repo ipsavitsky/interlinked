@@ -1,9 +1,10 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
+use indicatif::ProgressBar;
 use shared::{NewRecordScheme, come_up_with_solution};
 use std::env;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 use url::Url;
 
 #[derive(Parser)]
@@ -39,8 +40,12 @@ async fn new(payload_str: String, backend_url: &str) -> Result<()> {
         .duration_since(SystemTime::UNIX_EPOCH)
         .expect("Could not seed rng")
         .as_secs();
+    println!("Current difficulty: {difficulty}");
+    let spinner = ProgressBar::new_spinner().with_message("Calculating hash...");
+    spinner.enable_steady_tick(Duration::from_millis(100));
     let (challenge, _) = come_up_with_solution(difficulty, seed);
-
+    spinner.finish();
+    println!("challenge: {challenge}");
     let payload = Url::parse(&payload_str)?;
 
     let new_record = NewRecordScheme { payload, challenge };
@@ -53,7 +58,7 @@ async fn new(payload_str: String, backend_url: &str) -> Result<()> {
         .text()
         .await?;
 
-    println!("{backend_url}/{data}");
+    println!("Short link: {backend_url}/{data}");
     Ok(())
 }
 
@@ -65,7 +70,7 @@ async fn resolve(id: String, backend_url: &str) -> Result<()> {
         .text()
         .await?;
 
-    println!("{data}");
+    println!("Full link: {data}");
     Ok(())
 }
 

@@ -13,7 +13,7 @@ The project is organized as a monorepo with the following components:
 
 1.  **Clone the repository:**
     ```sh
-    git clone https://github.com/your-username/interlinked.git
+    git clone https://github.com/ipsavitsky/interlinked.git
     cd interlinked
     ```
 

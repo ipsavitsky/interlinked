@@ -14,5 +14,5 @@ create_db:
 serve_backend:
   cargo run --bin server
 
-serve_frontend:
+serve_frontend: generate_bindings
   bun run --cwd frontend dev

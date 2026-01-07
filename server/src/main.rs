@@ -5,13 +5,17 @@ use axum::{
     response::IntoResponse,
     routing::{get, post},
 };
-use diesel::prelude::*;
+use diesel::{
+    prelude::*,
+    result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
+};
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use dotenvy::dotenv;
 use shared::{NewRecordScheme, get_hash};
 use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
+use tracing_subscriber;
 
 use crate::models::{NewRecord, Record};
 
@@ -44,6 +48,7 @@ impl AppState {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::fmt::init();
     dotenv().ok();
     let db_url = env::var("DATABASE_URL").unwrap_or("../db/main.db".to_string());
     let port = env::var("PORT").unwrap_or("3000".to_string());
@@ -63,7 +68,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(format!("127.0.0.1:{}", port))
         .await
         .unwrap();
-    println!("listening on {}", listener.local_addr().unwrap());
+    tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, app).await.unwrap();
 }
 
@@ -91,15 +96,9 @@ async fn handler(
             if let Some(accept_header) = headers.get(header::ACCEPT) {
                 if let Ok(accept_str) = accept_header.to_str() {
                     if accept_str.contains("text/html") {
-                        let mut redirect_url = rec.redirect_url.clone();
-                        if !redirect_url.starts_with("http://")
-                            && !redirect_url.starts_with("https://")
-                        {
-                            redirect_url = format!("http://{}", redirect_url);
-                        }
                         return axum::response::Response::builder()
                             .status(302)
-                            .header(header::LOCATION, redirect_url)
+                            .header(header::LOCATION, rec.redirect_url)
                             .body(axum::body::Body::empty())
                             .unwrap();
                     }
@@ -124,18 +123,6 @@ async fn new_link_handler(
     use self::schema::records;
     let hash = get_hash(&body.challenge);
     let hash_prefix = "0".repeat(state.current_difficulty);
-    if !records::dsl::records
-        .filter(records::dsl::challenge_proof.eq(body.challenge.clone()))
-        .select(Record::as_select())
-        .load(&mut *state.db.lock().unwrap())
-        .expect("Could not query for existing proofs")
-        .is_empty()
-    {
-        return (
-            StatusCode::CONFLICT,
-            "Proof already used! Try again".to_string(),
-        );
-    }
     if !hash.starts_with(&hash_prefix) {
         (
             StatusCode::BAD_REQUEST,
@@ -146,13 +133,17 @@ async fn new_link_handler(
             redirect_url: body.payload.as_ref(),
             challenge_proof: &body.challenge,
         };
-        let new_id = diesel::insert_into(records::table)
+        match diesel::insert_into(records::table)
             .values(values)
             .returning(Record::as_returning())
             .get_result(&mut *state.db.lock().unwrap())
-            .expect("failed writing record")
-            .id
-            .to_string();
-        (StatusCode::OK, new_id)
+        {
+            Ok(r) => (StatusCode::OK, r.id.to_string()),
+            Err(DatabaseError(UniqueViolation, _)) => (
+                StatusCode::CONFLICT,
+                "Proof already used, try again!".to_string(),
+            ),
+            Err(e) => panic!("{}", e),
+        }
     }
 }
