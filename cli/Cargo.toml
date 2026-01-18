@@ -8,7 +8,7 @@ anyhow = "1.0.98"
 clap = { version = "4.5.41", features = ["derive"] }
 dotenvy = "0.15.7"
 indicatif = "0.18.3"
-reqwest = { version = "0.12.22", features = ["json"] }
+reqwest = { version = "0.13.0", features = ["json"] }
 shared = { version = "0.1.0", path = "../shared" }
 tokio = { version = "1.46.1", features = ["macros", "rt", "rt-multi-thread"] }
 url = "2.5.4"
