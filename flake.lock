@@ -182,6 +182,7 @@
         "naersk": "naersk",
         "nixpkgs": "nixpkgs_3",
         "rust-overlay": "rust-overlay",
+        "treefmt-nix": "treefmt-nix_2",
         "utils": "utils"
       }
     },
@@ -263,6 +264,26 @@
         "owner": "numtide",
         "repo": "treefmt-nix",
         "rev": "5b4ee75aeefd1e2d5a1cc43cf6ba65eba75e83e4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_2": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1768158989,
+        "narHash": "sha256-67vyT1+xClLldnumAzCTBvU0jLZ1YBcf4vANRWP3+Ak=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "e96d59dff5c0d7fddb9d113ba108f03c3ef99eca",
         "type": "github"
       },
       "original": {

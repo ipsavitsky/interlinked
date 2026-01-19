@@ -12,6 +12,7 @@ The project is organized as a monorepo with the following components:
 ## Installation
 
 1.  **Clone the repository:**
+
     ```sh
     git clone https://github.com/ipsavitsky/interlinked.git
     cd interlinked
@@ -19,12 +20,14 @@ The project is organized as a monorepo with the following components:
 
 2.  **Build the project:**
     This command compiles all the Rust crates.
+
     ```sh
     just build
     ```
 
 3.  **Generate WASM bindings:**
     This creates the WebAssembly package for the frontend.
+
     ```sh
     just generate_bindings
     ```
@@ -39,14 +42,15 @@ The project is organized as a monorepo with the following components:
 
 To run the application, you'll need to start both the backend and frontend services in separate terminal sessions.
 
--   **Run the backend server:**
-    ```sh
-    just serve_backend
-    ```
+- **Run the backend server:**
 
--   **Run the frontend server:**
-    ```sh
-    just serve_frontend
-    ```
+  ```sh
+  just serve_backend
+  ```
+
+- **Run the frontend server:**
+  ```sh
+  just serve_frontend
+  ```
 
 Once both are running, you can access the application in your browser, typically at `http://localhost:3001`, or use the cli to access store some links!

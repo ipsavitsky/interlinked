@@ -5,10 +5,24 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
     bun2nix.url = "github:nix-community/bun2nix";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, utils, naersk, rust-overlay, bun2nix }:
-    utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      utils,
+      naersk,
+      rust-overlay,
+      bun2nix,
+      treefmt-nix,
+    }:
+    utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -22,17 +36,36 @@
           cargo = rustToolchain;
           rustc = rustToolchain;
         };
+        treefmtModule = treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix;
       in
       {
+        formatter = treefmtModule.config.build.wrapper;
+
+        checks = {
+          formatting = treefmtModule.config.build.check self;
+        };
+
         packages = rec {
           cli = naersk-lib.buildPackage {
             pname = "cli";
-            cargoBuildOptions = x: x ++ [ "-p" "cli" ];
+            cargoBuildOptions =
+              x:
+              x
+              ++ [
+                "-p"
+                "cli"
+              ];
             src = ./.;
           };
           server = naersk-lib.buildPackage {
             pname = "server";
-            cargoBuildOptions = x: x ++ [ "-p" "server" ];
+            cargoBuildOptions =
+              x:
+              x
+              ++ [
+                "-p"
+                "server"
+              ];
             src = ./.;
             buildInputs = with pkgs; [ sqlite ];
           };
@@ -40,7 +73,13 @@
             pname = "frontend";
             src = ./.;
             buildInputs = with pkgs; [ wasm-bindgen-cli_0_2_100 ];
-            cargoBuildOptions = x: x ++ [ "-p" "frontend" ];
+            cargoBuildOptions =
+              x:
+              x
+              ++ [
+                "-p"
+                "frontend"
+              ];
             copyLibs = true;
             postInstall = ''
               mkdir -p $out/lib
@@ -70,21 +109,23 @@
           };
           default = self.packages.${system}.server;
         };
-        devShell = with pkgs; mkShell {
-          buildInputs = [
-            rustToolchain
-            diesel-cli
-            lazysql
-            sqlite
-            pkg-config
-            openssl
-            nil
-            bun
-            wasm-bindgen-cli_0_2_100
-            just
-            cargo-machete
-          ];
-        };
+        devShells.default =
+          with pkgs;
+          mkShell {
+            buildInputs = [
+              rustToolchain
+              diesel-cli
+              lazysql
+              sqlite
+              pkg-config
+              openssl
+              nil
+              bun
+              wasm-bindgen-cli_0_2_100
+              just
+              cargo-machete
+            ];
+          };
       }
     );
 }

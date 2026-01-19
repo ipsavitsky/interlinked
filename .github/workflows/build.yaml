@@ -7,5 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      - uses: DeterminateSystems/nix-installer-action@v21
+        with:
+          persist-credentials: false
+      - uses: DeterminateSystems/nix-installer-action@1e3c5df3156622df83bb8f5c467619557d02e284
       - run: nix build

@@ -6,7 +6,11 @@ on:
 
 jobs:
   lint:
+    permissions:
+      contents: read
     uses: ./.github/workflows/lint.yaml
   build:
+    permissions:
+      contents: read
     needs: [lint]
     uses: ./.github/workflows/build.yaml
