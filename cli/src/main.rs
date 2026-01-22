@@ -77,7 +77,7 @@ async fn resolve(id: String, backend_url: &str) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000".to_string());
+    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000/api".to_string());
     let args = Args::parse();
 
     match args.command {

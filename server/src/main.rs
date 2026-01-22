@@ -1,25 +1,16 @@
 use axum::{
-    Json, Router, debug_handler,
-    extract::{Path, State},
-    http::{HeaderMap, StatusCode, header},
-    response::IntoResponse,
+    Router,
     routing::{get, post},
 };
-use diesel::{
-    prelude::*,
-    result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
-};
+use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use dotenvy::dotenv;
-use shared::{NewRecordScheme, get_hash};
 use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
-use tracing_subscriber;
-
-use crate::models::{NewRecord, Record};
 
 pub mod models;
+pub mod routes;
 pub mod schema;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -32,7 +23,7 @@ fn establish_connection(db_url: &str) -> SqliteConnection {
 }
 
 #[derive(Clone)]
-struct AppState {
+pub struct AppState {
     db: Arc<Mutex<SqliteConnection>>,
     current_difficulty: usize,
 }
@@ -58,10 +49,14 @@ async fn main() {
         .unwrap();
     let state = AppState::new(&db_url, difficulty);
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
-    let app = Router::new()
-        .route("/difficulty", get(difficulty_handler))
-        .route("/{id}", get(handler))
-        .route("/", post(new_link_handler))
+    let backend_routes = Router::new()
+        .route("/difficulty", get(routes::api::difficulty::handler))
+        .route("/{id}", get(routes::api::redirect::handler))
+        .route("/", post(routes::api::new_link::handler));
+
+    let all_routes = Router::new()
+        .nest("/api", backend_routes)
+        .route("/", get(routes::index::handler))
         .layer(cors)
         .with_state(state);
 
@@ -69,81 +64,5 @@ async fn main() {
         .await
         .unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
-    axum::serve(listener, app).await.unwrap();
-}
-
-async fn difficulty_handler(State(state): State<AppState>) -> String {
-    state.current_difficulty.to_string()
-}
-
-#[debug_handler]
-async fn handler(
-    Path(id): Path<String>,
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl axum::response::IntoResponse {
-    use self::schema::records::dsl::{id as table_id, records};
-    let id_num = id.parse::<i32>().unwrap();
-    let selected_record = records
-        .filter(table_id.eq(id_num))
-        .select(Record::as_select())
-        .first(&mut *state.db.lock().unwrap())
-        .optional()
-        .expect("failed to load record");
-
-    match selected_record {
-        Some(rec) => {
-            if let Some(accept_header) = headers.get(header::ACCEPT) {
-                if let Ok(accept_str) = accept_header.to_str() {
-                    if accept_str.contains("text/html") {
-                        return axum::response::Response::builder()
-                            .status(302)
-                            .header(header::LOCATION, rec.redirect_url)
-                            .body(axum::body::Body::empty())
-                            .unwrap();
-                    }
-                }
-            }
-            axum::response::Response::new(axum::body::Body::from(rec.redirect_url))
-        }
-        None => axum::response::Response::builder()
-            .status(404)
-            .body(axum::body::Body::from(format!(
-                "record with id {id} not found"
-            )))
-            .unwrap(),
-    }
-}
-
-#[debug_handler]
-async fn new_link_handler(
-    State(state): State<AppState>,
-    body: Json<NewRecordScheme>,
-) -> impl IntoResponse {
-    use self::schema::records;
-    let hash = get_hash(&body.challenge);
-    let hash_prefix = "0".repeat(state.current_difficulty);
-    if !hash.starts_with(&hash_prefix) {
-        (
-            StatusCode::BAD_REQUEST,
-            "Hash does not compute!".to_string(),
-        )
-    } else {
-        let values = NewRecord {
-            redirect_url: body.payload.as_ref(),
-            challenge_proof: &body.challenge,
-        };
-        match diesel::insert_into(records::table)
-            .values(values)
-            .returning(Record::as_returning())
-            .get_result(&mut *state.db.lock().unwrap())
-        {
-            Ok(r) => (StatusCode::OK, r.id.to_string()),
-            Err(DatabaseError(UniqueViolation, _)) => (
-                StatusCode::CONFLICT,
-                "Proof already used, try again!".to_string(),
-            ),
-            Err(e) => panic!("{}", e),
-        }
-    }
+    axum::serve(listener, all_routes).await.unwrap();
 }
