@@ -3,8 +3,63 @@
   <head>
     <meta charset="UTF-8" />
     <title>interlinked</title>
-    <script>
+    <script type="module">
+      import init, { solution_wrapper } from "./pkg/frontend.js";
 
+      async function run() {
+        const linkInput = document.getElementById("link-input");
+        const resultContainer = document.getElementById("result-container");
+        const link = linkInput.value;
+
+        if (!link) {
+          resultContainer.textContent = "Please enter a link.";
+          return;
+        }
+
+        resultContainer.textContent = "Solving challenge...";
+
+        console.log("starting...");
+        // set correctly
+        const difficulty = 1;
+        console.log("calculating solution with difficulty", difficulty);
+        const result = solution_wrapper(difficulty, BigInt(Date.now()));
+        console.log("solution calculated:", result);
+
+        const url = "http://localhost:3000";
+        try {
+          const writeResponse = await fetch(`${url}/api`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              payload: link,
+              challenge: result,
+            }),
+          });
+          if (writeResponse.status != 200) {
+            console.error(
+              "Error writing record: returned code",
+              writeResponse.status,
+            );
+            resultContainer.textContent =
+              "Error writing record. " + (await writeResponse.text());
+            return;
+          }
+          const recordId = await writeResponse.text();
+          const shortenedLink = `${url}/api/${recordId}`;
+          resultContainer.innerHTML = `
+            <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>
+          `;
+        } catch (error) {
+          resultContainer.textContent = "Error writing record.";
+          console.error("Error writing record:", error);
+        }
+      }
+
+      init().then(() => {
+        document.getElementById("run-button").addEventListener("click", run);
+      });
     </script>
   </head>
   <body>

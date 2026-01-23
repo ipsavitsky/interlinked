@@ -1,4 +1,5 @@
-/target
+target
 .direnv
 result
 db
+server/pkg

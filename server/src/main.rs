@@ -1,6 +1,5 @@
 use axum::{
-    Router,
-    routing::{get, post},
+    Router, http::header, routing::{get, post}
 };
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -48,6 +47,7 @@ async fn main() {
         .parse::<usize>()
         .unwrap();
     let state = AppState::new(&db_url, difficulty);
+    // fix this ahh cors policy
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
     let backend_routes = Router::new()
         .route("/difficulty", get(routes::api::difficulty::handler))
@@ -57,6 +57,24 @@ async fn main() {
     let all_routes = Router::new()
         .nest("/api", backend_routes)
         .route("/", get(routes::index::handler))
+        .route(
+            "/pkg/frontend.js",
+            get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "text/javascript")],
+                    include_str!("../pkg/frontend.js"),
+                )
+            }),
+        )
+        .route(
+            "/pkg/frontend_bg.wasm",
+            get(|| async {
+                (
+                    [(header::CONTENT_TYPE, "application/wasm")],
+                    include_bytes!("../pkg/frontend_bg.wasm"),
+                )
+            }),
+        )
         .layer(cors)
         .with_state(state);
 

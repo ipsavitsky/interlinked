@@ -4,8 +4,11 @@ build:
 generate_bindings: build
     wasm-bindgen \
       --target web \
-      --out-dir frontend/pkg \
+      --out-dir server/pkg \
       ./target/wasm32-unknown-unknown/debug/frontend.wasm
+
+watch:
+    watchexec -r -i "./target/wasm32-unknown-unknown/debug/frontend.wasm" -i "server/pkg/*" -- "just generate_bindings; cargo run --bin server"
 
 create_db:
     mkdir -p db

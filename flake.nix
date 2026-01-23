@@ -67,12 +67,15 @@
                 "server"
               ];
             src = ./.;
-            buildInputs = with pkgs; [ sqlite ];
+            buildInputs = with pkgs; [ sqlite frontend-wasm ];
+            preBuild = ''
+              ln -s ${frontend-wasm}/lib server/pkg
+            '';
           };
           frontend-wasm = naersk-lib.buildPackage {
             pname = "frontend";
             src = ./.;
-            buildInputs = with pkgs; [ wasm-bindgen-cli_0_2_100 ];
+            buildInputs = with pkgs; [ wasm-bindgen-cli_0_2_108 ];
             cargoBuildOptions =
               x:
               x
@@ -84,27 +87,6 @@
             postInstall = ''
               mkdir -p $out/lib
               wasm-bindgen --target web --out-dir $out/lib $out/lib/frontend.wasm
-            '';
-          };
-          frontend = pkgs.stdenv.mkDerivation {
-            pname = "frontend";
-            version = "0.0.1";
-            src = ./.;
-            nativeBuildInputs = [
-              pkgs.bun2nix.hook
-              frontend-wasm
-            ];
-            bunRoot = "frontend";
-            bunDeps = pkgs.bun2nix.fetchBunDeps {
-              bunNix = ./frontend/bun.nix;
-            };
-            buildPhase = ''
-              ln -s ${frontend-wasm}/lib frontend/pkg
-              cp -r frontend dist
-            '';
-            installPhase = ''
-              mkdir -p $out/dist
-              cp -R ./dist $out
             '';
           };
           default = self.packages.${system}.server;
@@ -121,9 +103,10 @@
               openssl
               nil
               bun
-              wasm-bindgen-cli_0_2_100
+              wasm-bindgen-cli_0_2_108
               just
               cargo-machete
+              watchexec
             ];
           };
       }
