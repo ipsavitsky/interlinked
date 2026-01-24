@@ -2,10 +2,10 @@ use axum::{Router, routing::get};
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use dotenvy::dotenv;
-use url::Url;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
+use url::Url;
 
 pub mod models;
 pub mod routes;
@@ -32,7 +32,7 @@ impl AppState {
         AppState {
             db: Arc::new(Mutex::new(establish_connection(db_url))),
             current_difficulty: difficulty,
-            address
+            address,
         }
     }
 }
@@ -60,9 +60,7 @@ async fn main() {
         .layer(cors)
         .with_state(state);
 
-    let listener = tokio::net::TcpListener::bind(address)
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(address).await.unwrap();
     tracing::info!("listening on {}", listener.local_addr().unwrap());
     axum::serve(listener, all_routes).await.unwrap();
 }
