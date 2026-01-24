@@ -67,7 +67,10 @@
                 "server"
               ];
             src = ./.;
-            buildInputs = with pkgs; [ sqlite frontend-wasm ];
+            buildInputs = with pkgs; [
+              sqlite
+              frontend-wasm
+            ];
             preBuild = ''
               ln -s ${frontend-wasm}/lib server/pkg
             '';

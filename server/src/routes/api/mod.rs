@@ -1,3 +1,9 @@
+use axum::{Router, routing::get};
+
+use crate::AppState;
+
 pub mod difficulty;
-pub mod new_link;
-pub mod redirect;
+
+pub fn router() -> Router<AppState> {
+    Router::new().route("/difficulty", get(difficulty::handler))
+}

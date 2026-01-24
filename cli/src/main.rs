@@ -24,7 +24,7 @@ enum Commands {
 
 async fn get_difficulty(backend_url: &str) -> Result<usize> {
     Ok(reqwest::Client::new()
-        .get(format!("{}/difficulty", backend_url))
+        .get(format!("{}/api/difficulty", backend_url))
         .send()
         .await?
         .text()
@@ -33,6 +33,7 @@ async fn get_difficulty(backend_url: &str) -> Result<usize> {
 }
 
 async fn new(payload_str: String, backend_url: &str) -> Result<()> {
+    println!("{backend_url}");
     let difficulty = get_difficulty(backend_url)
         .await
         .expect("Could not query difficulty");
@@ -50,21 +51,23 @@ async fn new(payload_str: String, backend_url: &str) -> Result<()> {
 
     let new_record = NewRecordScheme { payload, challenge };
 
+    let post_url = format!("{backend_url}/links");
+
     let data = reqwest::Client::new()
-        .post(backend_url)
+        .post(&post_url)
         .json(&new_record)
         .send()
         .await?
         .text()
         .await?;
 
-    println!("Short link: {backend_url}/{data}");
+    println!("Short link: {post_url}/{data}");
     Ok(())
 }
 
 async fn resolve(id: String, backend_url: &str) -> Result<()> {
     let data = reqwest::Client::new()
-        .get(format!("{backend_url}/{id}"))
+        .get(format!("{backend_url}/links/{id}"))
         .send()
         .await?
         .text()
@@ -77,7 +80,7 @@ async fn resolve(id: String, backend_url: &str) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000/api".to_string());
+    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000".to_string());
     let args = Args::parse();
 
     match args.command {

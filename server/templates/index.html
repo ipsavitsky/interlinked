@@ -20,14 +20,14 @@
 
         console.log("starting...");
         // set correctly
-        const difficulty = 1;
+        const difficulty = {{difficulty}};
         console.log("calculating solution with difficulty", difficulty);
         const result = solution_wrapper(difficulty, BigInt(Date.now()));
         console.log("solution calculated:", result);
 
-        const url = "http://localhost:3000";
+        const url = "{{address}}";
         try {
-          const writeResponse = await fetch(`${url}/api`, {
+          const writeResponse = await fetch(`${url}/links`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -47,7 +47,7 @@
             return;
           }
           const recordId = await writeResponse.text();
-          const shortenedLink = `${url}/api/${recordId}`;
+          const shortenedLink = `${url}/links/${recordId}`;
           resultContainer.innerHTML = `
             <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>
           `;
