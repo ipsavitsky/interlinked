@@ -1,7 +1,6 @@
 use askama::Template;
 use askama_web::WebTemplate;
 use axum::extract::State;
-use url::Url;
 
 use crate::AppState;
 

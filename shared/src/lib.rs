@@ -10,6 +10,12 @@ pub struct NewRecordScheme {
     pub challenge: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct NewNoteScheme {
+    pub payload: String,
+    pub challenge: String,
+}
+
 pub fn get_hash(in_str: &str) -> String {
     String::from_utf8_lossy(&Hash::hash(in_str.as_bytes())).into_owned()
 }

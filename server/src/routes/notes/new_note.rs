@@ -1,17 +1,18 @@
-use crate::{
-    AppState,
-    models::{NewRecord, Record},
-};
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
 use diesel::{
     prelude::*,
     result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
 };
-use shared::{NewRecordScheme, get_hash};
+use shared::{NewNoteScheme, get_hash};
+
+use crate::{
+    AppState,
+    models::{NewRecord, Record},
+};
 
 pub async fn handler(
     State(state): State<AppState>,
-    body: Json<NewRecordScheme>,
+    body: Json<NewNoteScheme>,
 ) -> impl IntoResponse {
     use crate::schema::records;
     let hash = get_hash(&body.challenge);
@@ -25,7 +26,7 @@ pub async fn handler(
         let values = NewRecord {
             payload: body.payload.as_ref(),
             challenge_proof: &body.challenge,
-            record_type: "link",
+            record_type: "note",
         };
         match diesel::insert_into(records::table)
             .values(values)

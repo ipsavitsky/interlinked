@@ -5,7 +5,6 @@ use dotenvy::dotenv;
 use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
-use url::Url;
 
 pub mod models;
 pub mod routes;
@@ -55,6 +54,7 @@ async fn main() {
     let all_routes = Router::new()
         .nest("/api", routes::api::router())
         .nest("/links", routes::links::router())
+        .nest("/notes", routes::notes::router())
         .nest("/pkg", routes::assets::router())
         .route("/", get(routes::index::handler))
         .layer(cors)

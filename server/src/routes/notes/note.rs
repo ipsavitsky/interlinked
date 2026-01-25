@@ -1,6 +1,5 @@
 use axum::{
     extract::{Path, State},
-    http::{HeaderMap, header},
     response::IntoResponse,
 };
 
@@ -8,11 +7,7 @@ use crate::{AppState, models::Record};
 
 use diesel::prelude::*;
 
-pub async fn handler(
-    Path(id): Path<String>,
-    State(state): State<AppState>,
-    headers: HeaderMap,
-) -> impl IntoResponse {
+pub async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
     use crate::schema::records::dsl::{id as table_id, records};
     let id_num = id.parse::<i32>().unwrap();
     let selected_record = records
@@ -24,25 +19,18 @@ pub async fn handler(
 
     match selected_record {
         Some(rec) => {
-            if !rec.record_type.eq("link") {
+            if !rec.record_type.eq("note") {
                 return axum::response::Response::builder()
                     .status(404)
                     .body(axum::body::Body::from(format!(
-                        "record with id {id} is a note, not a link"
+                        "record with id {id} is a link and not a note"
                     )))
                     .unwrap();
             }
-            if let Some(accept_header) = headers.get(header::ACCEPT)
-                && let Ok(accept_str) = accept_header.to_str()
-                && accept_str.contains("text/html")
-            {
-                return axum::response::Response::builder()
-                    .status(302)
-                    .header(header::LOCATION, rec.payload)
-                    .body(axum::body::Body::empty())
-                    .unwrap();
-            }
-            axum::response::Response::new(axum::body::Body::from(rec.payload))
+            axum::response::Response::builder()
+                .status(200)
+                .body(axum::body::Body::from(rec.payload))
+                .unwrap()
         }
         None => axum::response::Response::builder()
             .status(404)

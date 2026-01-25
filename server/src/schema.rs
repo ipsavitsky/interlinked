@@ -4,6 +4,7 @@ diesel::table! {
     records (id) {
         id -> Integer,
         challenge_proof -> Text,
-        redirect_url -> Text,
+        payload -> Text,
+        record_type -> Text,
     }
 }
