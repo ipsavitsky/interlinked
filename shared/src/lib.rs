@@ -16,6 +16,63 @@ pub struct NewNoteScheme {
     pub challenge: String,
 }
 
+pub trait RecordPayload {
+    fn as_str(&self) -> &str;
+    fn record_type(&self) -> &'static str;
+    fn challenge(&self) -> &str;
+    fn with_challenge(&self, challenge: String) -> Self
+    where
+        Self: Sized;
+}
+
+impl RecordPayload for NewRecordScheme {
+    fn as_str(&self) -> &str {
+        self.payload.as_str()
+    }
+
+    fn record_type(&self) -> &'static str {
+        "link"
+    }
+
+    fn challenge(&self) -> &str {
+        &self.challenge
+    }
+
+    fn with_challenge(&self, challenge: String) -> Self
+    where
+        Self: Sized,
+    {
+        NewRecordScheme {
+            payload: self.payload.clone(),
+            challenge,
+        }
+    }
+}
+
+impl RecordPayload for NewNoteScheme {
+    fn as_str(&self) -> &str {
+        &self.payload
+    }
+
+    fn record_type(&self) -> &'static str {
+        "note"
+    }
+
+    fn challenge(&self) -> &str {
+        &self.challenge
+    }
+
+    fn with_challenge(&self, challenge: String) -> Self
+    where
+        Self: Sized,
+    {
+        NewNoteScheme {
+            payload: self.payload.clone(),
+            challenge,
+        }
+    }
+}
+
 pub fn get_hash(in_str: &str) -> String {
     String::from_utf8_lossy(&Hash::hash(in_str.as_bytes())).into_owned()
 }

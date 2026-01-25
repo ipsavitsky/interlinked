@@ -338,6 +338,7 @@ dependencies = [
  "dotenvy",
  "indicatif",
  "reqwest",
+ "serde",
  "shared",
  "tokio",
  "url",

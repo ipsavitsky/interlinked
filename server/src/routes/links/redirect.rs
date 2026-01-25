@@ -1,54 +1,46 @@
 use axum::{
     extract::{Path, State},
     http::{HeaderMap, header},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 
-use crate::{AppState, models::Record};
+use crate::models::Record;
+use crate::routes::common::{RecordHandler, fetch_record};
 
-use diesel::prelude::*;
+pub struct LinkHandler;
+
+impl RecordHandler for LinkHandler {
+    fn record_type() -> &'static str {
+        "link"
+    }
+
+    fn not_found_message(id: &str) -> String {
+        format!("record with id {id} not found")
+    }
+
+    fn wrong_type_message(id: &str) -> String {
+        format!("record with id {id} is a note, not a link")
+    }
+
+    fn handle_record(rec: &Record, _id: &str, headers: Option<&HeaderMap>) -> Response {
+        if let Some(accept_header) = headers.and_then(|h| h.get(header::ACCEPT))
+            && let Ok(accept_str) = accept_header.to_str()
+            && accept_str.contains("text/html")
+        {
+            return Response::builder()
+                .status(302)
+                .header(header::LOCATION, rec.payload.clone())
+                .body(axum::body::Body::empty())
+                .unwrap();
+        }
+        Response::new(axum::body::Body::from(rec.payload.clone()))
+    }
+}
 
 pub async fn handler(
-    Path(id): Path<String>,
-    State(state): State<AppState>,
+    id: Path<String>,
+    state: State<crate::AppState>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    use crate::schema::records::dsl::{id as table_id, records};
-    let id_num = id.parse::<i32>().unwrap();
-    let selected_record = records
-        .filter(table_id.eq(id_num))
-        .select(Record::as_select())
-        .first(&mut *state.db.lock().unwrap())
-        .optional()
-        .expect("failed to load record");
-
-    match selected_record {
-        Some(rec) => {
-            if !rec.record_type.eq("link") {
-                return axum::response::Response::builder()
-                    .status(404)
-                    .body(axum::body::Body::from(format!(
-                        "record with id {id} is a note, not a link"
-                    )))
-                    .unwrap();
-            }
-            if let Some(accept_header) = headers.get(header::ACCEPT)
-                && let Ok(accept_str) = accept_header.to_str()
-                && accept_str.contains("text/html")
-            {
-                return axum::response::Response::builder()
-                    .status(302)
-                    .header(header::LOCATION, rec.payload)
-                    .body(axum::body::Body::empty())
-                    .unwrap();
-            }
-            axum::response::Response::new(axum::body::Body::from(rec.payload))
-        }
-        None => axum::response::Response::builder()
-            .status(404)
-            .body(axum::body::Body::from(format!(
-                "record with id {id} not found"
-            )))
-            .unwrap(),
-    }
+    fetch_record::<LinkHandler>(id, state, Some(headers)).await
 }

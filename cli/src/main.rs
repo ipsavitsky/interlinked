@@ -2,7 +2,8 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use dotenvy::dotenv;
 use indicatif::ProgressBar;
-use shared::{NewNoteScheme, NewRecordScheme, come_up_with_solution};
+use serde::Serialize;
+use shared::{NewNoteScheme, NewRecordScheme, RecordPayload, come_up_with_solution};
 use std::time::{Duration, SystemTime};
 use std::{env, fs};
 use url::Url;
@@ -63,15 +64,14 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
     Ok(challenge)
 }
 
-async fn new_link(payload_str: String, backend_url: &str) -> Result<()> {
+async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &str) -> Result<()> {
     let difficulty = get_difficulty(backend_url).await?;
     let challenge = calculate_hash(difficulty).await?;
-    let payload = Url::parse(&payload_str)?;
-    let new_record = NewRecordScheme { payload, challenge };
-    let post_url = format!("{backend_url}/links");
+    let record = payload.with_challenge(challenge);
+    let post_url = format!("{}/{}", backend_url, record.record_type());
     let data = reqwest::Client::new()
         .post(&post_url)
-        .json(&new_record)
+        .json(&record)
         .send()
         .await?
         .text()
@@ -80,38 +80,9 @@ async fn new_link(payload_str: String, backend_url: &str) -> Result<()> {
     Ok(())
 }
 
-async fn new_note(filename: String, backend_url: &str) -> Result<()> {
-    let difficulty = get_difficulty(backend_url).await?;
-    let challenge = calculate_hash(difficulty).await?;
-    let payload = fs::read_to_string(filename)?;
-    let new_record = NewNoteScheme { payload, challenge };
-    let post_url = format!("{backend_url}/notes");
+async fn resolve_record(id: u32, record_type: &str, backend_url: &str) -> Result<()> {
     let data = reqwest::Client::new()
-        .post(&post_url)
-        .json(&new_record)
-        .send()
-        .await?
-        .text()
-        .await?;
-    println!("Short link: {post_url}/{data}");
-    Ok(())
-}
-
-async fn resolve_link(id: u32, backend_url: &str) -> Result<()> {
-    let data = reqwest::Client::new()
-        .get(format!("{backend_url}/links/{id}"))
-        .send()
-        .await?
-        .text()
-        .await?;
-
-    println!("{data}");
-    Ok(())
-}
-
-async fn resolve_note(id: u32, backend_url: &str) -> Result<()> {
-    let data = reqwest::Client::new()
-        .get(format!("{backend_url}/notes/{id}"))
+        .get(format!("{}/{}/{}", backend_url, record_type, id))
         .send()
         .await?
         .text()
@@ -130,15 +101,29 @@ async fn main() -> Result<()> {
     match args.command {
         Commands::New {
             subcommand: PayloadType::Link { link },
-        } => new_link(link, &backend_url).await,
+        } => {
+            let payload = Url::parse(&link)?;
+            let record = NewRecordScheme {
+                payload,
+                challenge: String::new(),
+            };
+            create_record(record, &backend_url).await
+        }
         Commands::New {
             subcommand: PayloadType::Note { filename },
-        } => new_note(filename, &backend_url).await,
+        } => {
+            let payload = fs::read_to_string(filename)?;
+            let record = NewNoteScheme {
+                payload,
+                challenge: String::new(),
+            };
+            create_record(record, &backend_url).await
+        }
         Commands::Resolve {
             subcommand: RequestType::Link { id },
-        } => resolve_link(id, &backend_url).await,
+        } => resolve_record(id, "links", &backend_url).await,
         Commands::Resolve {
             subcommand: RequestType::Note { id },
-        } => resolve_note(id, &backend_url).await,
+        } => resolve_record(id, "notes", &backend_url).await,
     }
 }

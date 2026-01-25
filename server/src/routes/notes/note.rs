@@ -1,42 +1,38 @@
 use axum::{
     extract::{Path, State},
-    response::IntoResponse,
+    response::{IntoResponse, Response},
 };
 
-use crate::{AppState, models::Record};
+use crate::models::Record;
+use crate::routes::common::{RecordHandler, fetch_record};
 
-use diesel::prelude::*;
+pub struct NoteHandler;
 
-pub async fn handler(Path(id): Path<String>, State(state): State<AppState>) -> impl IntoResponse {
-    use crate::schema::records::dsl::{id as table_id, records};
-    let id_num = id.parse::<i32>().unwrap();
-    let selected_record = records
-        .filter(table_id.eq(id_num))
-        .select(Record::as_select())
-        .first(&mut *state.db.lock().unwrap())
-        .optional()
-        .expect("failed to load record");
-
-    match selected_record {
-        Some(rec) => {
-            if !rec.record_type.eq("note") {
-                return axum::response::Response::builder()
-                    .status(404)
-                    .body(axum::body::Body::from(format!(
-                        "record with id {id} is a link and not a note"
-                    )))
-                    .unwrap();
-            }
-            axum::response::Response::builder()
-                .status(200)
-                .body(axum::body::Body::from(rec.payload))
-                .unwrap()
-        }
-        None => axum::response::Response::builder()
-            .status(404)
-            .body(axum::body::Body::from(format!(
-                "record with id {id} not found"
-            )))
-            .unwrap(),
+impl RecordHandler for NoteHandler {
+    fn record_type() -> &'static str {
+        "note"
     }
+
+    fn not_found_message(id: &str) -> String {
+        format!("record with id {id} not found")
+    }
+
+    fn wrong_type_message(id: &str) -> String {
+        format!("record with id {id} is a link and not a note")
+    }
+
+    fn handle_record(
+        rec: &Record,
+        _id: &str,
+        _headers: Option<&axum::http::HeaderMap>,
+    ) -> Response {
+        Response::builder()
+            .status(200)
+            .body(axum::body::Body::from(rec.payload.clone()))
+            .unwrap()
+    }
+}
+
+pub async fn handler(id: Path<String>, state: State<crate::AppState>) -> impl IntoResponse {
+    fetch_record::<NoteHandler>(id, state, None).await
 }
