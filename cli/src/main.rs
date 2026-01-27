@@ -1,18 +1,34 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use dotenvy::dotenv;
 use indicatif::ProgressBar;
-use serde::Serialize;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use shared::{NewNoteScheme, NewRecordScheme, RecordPayload, come_up_with_solution};
+use std::fs;
+use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
-use std::{env, fs};
 use url::Url;
+
+#[derive(Deserialize)]
+struct Config {
+    backend_url: Url,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            backend_url: Url::parse("http://localhost:3000").unwrap(),
+        }
+    }
+}
 
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {
     #[arg(short, long)]
     verbose: bool,
+    #[arg(short, long)]
+    config: Option<PathBuf>,
     #[command(subcommand)]
     command: Commands,
 }
@@ -41,9 +57,9 @@ enum RequestType {
     Note { id: u32 },
 }
 
-async fn get_difficulty(backend_url: &str) -> Result<usize> {
-    Ok(reqwest::Client::new()
-        .get(format!("{}/api/difficulty", backend_url))
+async fn get_difficulty(backend_url: &Url) -> Result<usize> {
+    Ok(Client::new()
+        .get(backend_url.join("/api/difficulty")?)
         .send()
         .await?
         .text()
@@ -64,13 +80,13 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
     Ok(challenge)
 }
 
-async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &str) -> Result<()> {
+async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Url) -> Result<()> {
     let difficulty = get_difficulty(backend_url).await?;
     let challenge = calculate_hash(difficulty).await?;
     let record = payload.with_challenge(challenge);
-    let post_url = format!("{}/{}", backend_url, record.record_type());
-    let data = reqwest::Client::new()
-        .post(&post_url)
+    let post_url = backend_url.join(record.record_type())?;
+    let data = Client::new()
+        .post(post_url.as_str())
         .json(&record)
         .send()
         .await?
@@ -80,9 +96,9 @@ async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &s
     Ok(())
 }
 
-async fn resolve_record(id: u32, record_type: &str, backend_url: &str) -> Result<()> {
-    let data = reqwest::Client::new()
-        .get(format!("{}/{}/{}", backend_url, record_type, id))
+async fn resolve_record(id: u32, record_type: &str, backend_url: &Url) -> Result<()> {
+    let data = Client::new()
+        .get(backend_url.join(&format!("{record_type}/{id}"))?)
         .send()
         .await?
         .text()
@@ -94,9 +110,12 @@ async fn resolve_record(id: u32, record_type: &str, backend_url: &str) -> Result
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    dotenv().ok();
-    let backend_url = env::var("BACKEND_URL").unwrap_or("http://127.0.0.1:3000".to_string());
     let args = Args::parse();
+
+    let conf = match args.config {
+        Some(path) => toml::from_str(&std::fs::read_to_string(path)?)?,
+        None => Config::default(),
+    };
 
     match args.command {
         Commands::New {
@@ -107,7 +126,7 @@ async fn main() -> Result<()> {
                 payload,
                 challenge: String::new(),
             };
-            create_record(record, &backend_url).await
+            create_record(record, &conf.backend_url).await
         }
         Commands::New {
             subcommand: PayloadType::Note { filename },
@@ -117,13 +136,13 @@ async fn main() -> Result<()> {
                 payload,
                 challenge: String::new(),
             };
-            create_record(record, &backend_url).await
+            create_record(record, &conf.backend_url).await
         }
         Commands::Resolve {
             subcommand: RequestType::Link { id },
-        } => resolve_record(id, "links", &backend_url).await,
+        } => resolve_record(id, "links", &conf.backend_url).await,
         Commands::Resolve {
             subcommand: RequestType::Note { id },
-        } => resolve_record(id, "notes", &backend_url).await,
+        } => resolve_record(id, "notes", &conf.backend_url).await,
     }
 }

@@ -7,13 +7,18 @@ use crate::AppState;
 #[derive(Template, WebTemplate)]
 #[template(path = "index.html")]
 pub struct MainPage {
-    difficulty: usize,
-    address: String,
+    difficulty: u32,
+    url: String,
 }
 
 pub async fn handler(State(state): State<AppState>) -> MainPage {
     MainPage {
-        difficulty: state.current_difficulty,
-        address: state.address,
+        difficulty: state.configuration.difficulty,
+        url: state
+            .configuration
+            .url
+            .to_string()
+            .trim_end_matches("/")
+            .to_string(),
     }
 }

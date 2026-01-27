@@ -25,9 +25,9 @@
         const result = solution_wrapper(difficulty, BigInt(Date.now()));
         console.log("solution calculated:", result);
 
-        const url = "{{address}}";
+        const url = "{{url}}";
         try {
-          const writeResponse = await fetch(`${url}/links`, {
+          const writeResponse = await fetch(`${url}/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -47,7 +47,7 @@
             return;
           }
           const recordId = await writeResponse.text();
-          const shortenedLink = `${url}/links/${recordId}`;
+          const shortenedLink = `${url}/link/${recordId}`;
           resultContainer.innerHTML = `
             <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>
           `;

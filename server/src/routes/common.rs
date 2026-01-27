@@ -21,7 +21,7 @@ pub async fn create_record<T: RecordPayload>(
 ) -> impl IntoResponse {
     use crate::schema::records;
     let hash = get_hash(body.challenge());
-    let hash_prefix = "0".repeat(state.current_difficulty);
+    let hash_prefix = "0".repeat(state.configuration.difficulty as usize);
     if !hash.starts_with(&hash_prefix) {
         (
             StatusCode::BAD_REQUEST,

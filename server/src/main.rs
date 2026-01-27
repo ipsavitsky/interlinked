@@ -1,11 +1,11 @@
 use axum::{Router, routing::get};
+use config::Config;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
-use dotenvy::dotenv;
-use std::env;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::{Any, CorsLayer};
 
+pub mod config;
 pub mod models;
 pub mod routes;
 pub mod schema;
@@ -22,39 +22,38 @@ fn establish_connection(db_url: &str) -> SqliteConnection {
 #[derive(Clone)]
 pub struct AppState {
     db: Arc<Mutex<SqliteConnection>>,
-    current_difficulty: usize,
-    address: String,
+    configuration: Config,
 }
 
 impl AppState {
-    fn new(db_url: &str, difficulty: usize, address: String) -> AppState {
+    fn new(conf: Config) -> AppState {
         AppState {
-            db: Arc::new(Mutex::new(establish_connection(db_url))),
-            current_difficulty: difficulty,
-            address,
+            db: Arc::new(Mutex::new(establish_connection(&conf.db_url))),
+            configuration: conf,
         }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init();
-    dotenv().ok();
-    let db_url = env::var("DATABASE_URL").unwrap_or("../db/main.db".to_string());
-    let address = env::var("ADDRESS").unwrap_or("127.0.0.1:3000".to_string());
-    let difficulty = env::var("DIFFICULTY")
-        .unwrap_or("1".to_string())
-        .parse::<usize>()
-        .unwrap();
+    let conf = Config::parse().expect("Failed to parse config");
 
-    let state = AppState::new(&db_url, difficulty, format!("http://{address}"));
+    tracing_subscriber::fmt::fmt()
+        .compact()
+        .with_line_number(true)
+        .with_thread_ids(true)
+        .with_max_level(conf.log_level)
+        .init();
+
+    let address = conf.address.clone(); // cringe ew
+    let state = AppState::new(conf);
     // fix this ahh cors policy
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
 
     let all_routes = Router::new()
         .nest("/api", routes::api::router())
-        .nest("/links", routes::links::router())
-        .nest("/notes", routes::notes::router())
+        .nest("/link", routes::links::router())
+        .nest("/note", routes::notes::router())
         .nest("/pkg", routes::assets::router())
         .route("/", get(routes::index::handler))
         .layer(cors)
