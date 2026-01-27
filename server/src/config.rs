@@ -27,7 +27,7 @@ impl Default for Config {
 
 impl Config {
     pub fn parse() -> Result<Config> {
-        dotenv().expect("Failed to load environment variables");
+        dotenv().ok();
         let mut config = Config::default();
 
         if let Ok(address) = env::var("INTERLINKED_ADDRESS") {

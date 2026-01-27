@@ -4,7 +4,6 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
-    bun2nix.url = "github:nix-community/bun2nix";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -18,7 +17,6 @@
       utils,
       naersk,
       rust-overlay,
-      bun2nix,
       treefmt-nix,
     }:
     utils.lib.eachDefaultSystem (
@@ -28,7 +26,6 @@
           inherit system;
           overlays = [
             (import rust-overlay)
-            bun2nix.overlays.default
           ];
         };
         rustToolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
@@ -113,5 +110,10 @@
             ];
           };
       }
-    );
+    )
+    // {
+      nixosModules = {
+        interlinked = import ./nix/service.nix { interlinked = self.packages; };
+      };
+    };
 }
