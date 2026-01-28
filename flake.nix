@@ -115,5 +115,9 @@
       nixosModules = {
         interlinked = import ./nix/service.nix { interlinked = self.packages; };
       };
+
+      homeManagerModules = {
+        interlinked = import ./nix/hm.nix { interlinked = self.packages; };
+      };
     };
 }

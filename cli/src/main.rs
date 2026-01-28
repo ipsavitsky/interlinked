@@ -4,7 +4,6 @@ use indicatif::ProgressBar;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use shared::{NewNoteScheme, NewRecordScheme, RecordPayload, come_up_with_solution};
-use std::fs;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 use url::Url;
@@ -114,7 +113,15 @@ async fn main() -> Result<()> {
 
     let conf = match args.config {
         Some(path) => toml::from_str(&std::fs::read_to_string(path)?)?,
-        None => Config::default(),
+        None => {
+            let home = std::env::var("HOME")?;
+            let conf_path = format!("{}/.config/interlinked/config.toml", home);
+            if std::fs::exists(&conf_path)? {
+                toml::from_str(&std::fs::read_to_string(conf_path)?)?
+            } else {
+                Config::default()
+            }
+        },
     };
 
     match args.command {
@@ -131,7 +138,7 @@ async fn main() -> Result<()> {
         Commands::New {
             subcommand: PayloadType::Note { filename },
         } => {
-            let payload = fs::read_to_string(filename)?;
+            let payload = std::fs::read_to_string(filename)?;
             let record = NewNoteScheme {
                 payload,
                 challenge: String::new(),
