@@ -121,7 +121,7 @@ async fn main() -> Result<()> {
             } else {
                 Config::default()
             }
-        },
+        }
     };
 
     match args.command {

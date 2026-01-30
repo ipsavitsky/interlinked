@@ -8,12 +8,12 @@ name = "itlkd"
 path = "src/main.rs"
 
 [dependencies]
-anyhow = "1.0.98"
+anyhow = { workspace = true }
 clap = { version = "4.5.41", features = ["derive"] }
 indicatif = "0.18.3"
 reqwest = { version = "0.13.0", features = ["json"] }
-serde = "1.0.219"
+serde = { workspace = true }
 shared = { version = "0.1.0", path = "../shared" }
-tokio = { version = "1.46.1", features = ["macros", "rt", "rt-multi-thread"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread"] }
 toml = "0.9.11"
-url = "2.5.4"
+url = { workspace = true }

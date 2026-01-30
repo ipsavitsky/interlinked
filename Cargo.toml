@@ -3,4 +3,10 @@ cargo-features = ["per-package-target"]
 [workspace]
 resolver = "2"
 
-members = [ "cli", "frontend", "server", "shared" ]
+members = [ "cli", "frontend", "server", "shared", "tests" ]
+
+[workspace.dependencies]
+anyhow = "1.0"
+serde = "1.0"
+tokio = "1.46"
+url = "2.5"
