@@ -1,17 +1,9 @@
-name: lint
+name: test
 
 on: [workflow_call]
 
 jobs:
-  nix:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
-        with:
-          persist-credentials: false
-      - uses: DeterminateSystems/nix-installer-action@c5a866b6ab867e88becbed4467b93592bce69f8a
-      - run: nix flake check
-  native:
+  integration:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
@@ -20,5 +12,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@4be9e76fd7c4901c61fb841f559994984270fce7
       - run: cargo install wasm-bindgen-cli --version 0.2.108
       - uses: extractions/setup-just@69d82fb0233557aec017ef13706851d0694e0f1d
-      - run: just generate_bindings
-      - run: cargo clippy
+      - run: just build
+      - name: Run tests
+        env:
+          ITLKD_SERVER_PATH: target/debug/itlkd-server
+          ITLKD_CLI_PATH: target/debug/itlkd
+        run: cargo test -p tests

@@ -14,3 +14,8 @@ jobs:
       contents: read
     needs: [lint]
     uses: ./.github/workflows/build.yaml
+  test:
+    permissions:
+      contents: read
+    needs: [build]
+    uses: ./.github/workflows/test.yaml

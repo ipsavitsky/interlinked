@@ -12,10 +12,4 @@ _: {
     prettier.enable = true;
     zizmor.enable = true;
   };
-
-  settings.formatter = {
-    nixfmt.excludes = [ "frontend/bun.nix" ];
-    statix.excludes = [ "frontend/bun.nix" ];
-    deadnix.excludes = [ "frontend/bun.nix" ];
-  };
 }

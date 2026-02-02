@@ -107,6 +107,7 @@
               just
               cargo-machete
               watchexec
+              act
             ];
           };
       }
