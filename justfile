@@ -1,7 +1,10 @@
-build:
+build: generate_bindings
     cargo build
 
-generate_bindings: build
+build_frontend:
+    cargo build --package frontend
+
+generate_bindings: build_frontend
     wasm-bindgen \
       --target web \
       --out-dir server/pkg \
@@ -17,8 +20,5 @@ create_db:
     mkdir -p db
     diesel migration run
 
-serve_backend:
-  cargo run --bin server
-
-serve_frontend: generate_bindings
-  bun run --cwd frontend dev
+test: build
+    cargo test --workspace --exclude frontend

@@ -147,9 +147,9 @@ async fn main() -> Result<()> {
         }
         Commands::Resolve {
             subcommand: RequestType::Link { id },
-        } => resolve_record(id, "links", &conf.backend_url).await,
+        } => resolve_record(id, "link", &conf.backend_url).await,
         Commands::Resolve {
             subcommand: RequestType::Note { id },
-        } => resolve_record(id, "notes", &conf.backend_url).await,
+        } => resolve_record(id, "note", &conf.backend_url).await,
     }
 }

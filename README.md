@@ -5,7 +5,7 @@
 The project is organized as a monorepo with the following components:
 
 - `server/`: The backend server that handles API requests and serves the frontend.
-- `frontend/`: The WASM-based frontend application.
+- `frontend/`: A crate with frontend bindings.
 - `cli/`: A command-line interface for accessing the backend.
 - `shared/`: A shared Rust crate for code used by other components (e.g., data models).
 
@@ -45,12 +45,7 @@ To run the application, you'll need to start both the backend and frontend servi
 - **Run the backend server:**
 
   ```sh
-  just serve_backend
-  ```
-
-- **Run the frontend server:**
-  ```sh
-  just serve_frontend
+  just watch
   ```
 
 Once both are running, you can access the application in your browser, typically at `http://localhost:3001`, or use the cli to access store some links!
