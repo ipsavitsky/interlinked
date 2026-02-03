@@ -4,8 +4,8 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::models::Record;
 use crate::routes::common::{RecordHandler, fetch_record};
+use crate::{AppState, models::Record};
 
 pub struct LinkHandler;
 
@@ -22,7 +22,12 @@ impl RecordHandler for LinkHandler {
         format!("record with id {id} is a note, not a link")
     }
 
-    fn handle_record(rec: &Record, _id: &str, headers: Option<&HeaderMap>) -> Response {
+    async fn handle_record(
+        rec: &Record,
+        _id: &str,
+        _state: &AppState,
+        headers: Option<&HeaderMap>,
+    ) -> Response {
         if let Some(accept_header) = headers.and_then(|h| h.get(header::ACCEPT))
             && let Ok(accept_str) = accept_header.to_str()
             && accept_str.contains("text/html")

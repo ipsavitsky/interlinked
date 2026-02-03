@@ -76,7 +76,7 @@ in
         Environment = [
           "INTERLINKED_ADDRESS=${cfg.address}"
           "INTERLINKED_URL=${cfg.url}"
-          "INTERLINKED_DB_URL=${cfg.dataDir}/interlinked.sqlite"
+          "INTERLINKED_STORE_DIR=${cfg.dataDir}"
           "INTERLINKED_LOG_LEVEL=${cfg.logLevel}"
           "INTERLINKED_DIFFICULTY=${builtins.toString cfg.difficulty}"
         ];

@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use shared::{NewNoteScheme, NewRecordScheme, RecordPayload, come_up_with_solution};
+use shared::{NewLinkScheme, NewNoteScheme, RecordPayload, proof_of_work::come_up_with_solution};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 use url::Url;
@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
             subcommand: PayloadType::Link { link },
         } => {
             let payload = Url::parse(&link)?;
-            let record = NewRecordScheme {
+            let record = NewLinkScheme {
                 payload,
                 challenge: String::new(),
             };

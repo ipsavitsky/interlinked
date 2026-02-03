@@ -3,4 +3,3 @@ target
 result
 db
 server/pkg
-tests/interlinked.db

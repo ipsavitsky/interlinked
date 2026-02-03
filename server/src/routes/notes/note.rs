@@ -1,10 +1,11 @@
 use axum::{
-    extract::{Path, State},
+    extract::State,
     response::{IntoResponse, Response},
 };
+use object_store::ObjectStoreExt;
 
-use crate::models::Record;
 use crate::routes::common::{RecordHandler, fetch_record};
+use crate::{AppState, models::Record};
 
 pub struct NoteHandler;
 
@@ -21,18 +22,30 @@ impl RecordHandler for NoteHandler {
         format!("record with id {id} is a link and not a note")
     }
 
-    fn handle_record(
+    async fn handle_record(
         rec: &Record,
         _id: &str,
+        state: &AppState,
         _headers: Option<&axum::http::HeaderMap>,
     ) -> Response {
+        let data = state
+            .bucket
+            .get(&object_store::path::Path::from(rec.payload.clone()))
+            .await
+            .unwrap()
+            .bytes()
+            .await
+            .unwrap();
         Response::builder()
             .status(200)
-            .body(axum::body::Body::from(rec.payload.clone()))
+            .body(axum::body::Body::from(data))
             .unwrap()
     }
 }
 
-pub async fn handler(id: Path<String>, state: State<crate::AppState>) -> impl IntoResponse {
+pub async fn handler(
+    id: axum::extract::Path<String>,
+    state: State<crate::AppState>,
+) -> impl IntoResponse {
     fetch_record::<NoteHandler>(id, state, None).await
 }

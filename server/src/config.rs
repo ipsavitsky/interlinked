@@ -1,6 +1,6 @@
 use anyhow::Result;
 use dotenvy::dotenv;
-use std::env;
+use std::{env, path::PathBuf};
 use tracing::Level;
 use url::Url;
 
@@ -8,7 +8,7 @@ use url::Url;
 pub struct Config {
     pub address: String,
     pub url: Url,
-    pub db_url: String, //TODO: url????
+    pub store_dir: PathBuf,
     pub log_level: Level,
     pub difficulty: u32,
 }
@@ -18,7 +18,7 @@ impl Default for Config {
         Config {
             address: "127.0.0.1:8080".to_string(),
             url: Url::parse("http://localhost:8080").unwrap(),
-            db_url: "./interlinked.sqlite".to_string(),
+            store_dir: PathBuf::from("./"),
             log_level: Level::INFO,
             difficulty: 1,
         }
@@ -38,8 +38,8 @@ impl Config {
             config.url = Url::parse(&url).expect("Failed to parse URL");
         }
 
-        if let Ok(db_url) = env::var("INTERLINKED_DB_URL") {
-            config.db_url = db_url;
+        if let Ok(store_dir) = env::var("INTERLINKED_STORE_DIR") {
+            config.store_dir = PathBuf::from(store_dir);
         }
 
         if let Ok(log_level) = env::var("INTERLINKED_LOG_LEVEL") {

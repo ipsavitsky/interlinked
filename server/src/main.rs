@@ -2,7 +2,11 @@ use axum::{Router, routing::get};
 use config::Config;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
-use std::sync::{Arc, Mutex};
+use object_store::{ObjectStore, local::LocalFileSystem};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 use tower_http::cors::{Any, CorsLayer};
 
 pub mod config;
@@ -12,23 +16,41 @@ pub mod schema;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
-fn establish_connection(db_url: &str) -> SqliteConnection {
-    let mut conn = SqliteConnection::establish(db_url).expect("cannot connect to db");
+fn establish_connection(path: &Path) -> SqliteConnection {
+    let mut conn = SqliteConnection::establish(
+        path.join("interlinked.db")
+            .to_str()
+            .expect("cannot get path"),
+    )
+    .expect("cannot connect to db");
     conn.run_pending_migrations(MIGRATIONS)
         .expect("failed to run migrations");
     conn
 }
 
+fn connect_to_store(path: &Path) -> LocalFileSystem {
+    let objects_path = path.join("objects");
+    if !objects_path.exists() {
+        std::fs::create_dir(&objects_path).expect("Could not create objects dir");
+    }
+    if !objects_path.is_dir() {
+        panic!("objects path is not a directory");
+    }
+    LocalFileSystem::new_with_prefix(objects_path).expect("Failed to initialize object storage")
+}
+
 #[derive(Clone)]
 pub struct AppState {
     db: Arc<Mutex<SqliteConnection>>,
+    bucket: Arc<dyn ObjectStore>,
     configuration: Config,
 }
 
 impl AppState {
     fn new(conf: Config) -> AppState {
         AppState {
-            db: Arc::new(Mutex::new(establish_connection(&conf.db_url))),
+            db: Arc::new(Mutex::new(establish_connection(&conf.store_dir))),
+            bucket: Arc::new(connect_to_store(&conf.store_dir)),
             configuration: conf,
         }
     }
@@ -45,7 +67,7 @@ async fn main() {
         .with_max_level(conf.log_level)
         .init();
 
-    let address = conf.address.clone(); // cringe ew
+    let address = conf.address.clone(); // FIXME
     let state = AppState::new(conf);
     // fix this ahh cors policy
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);

@@ -8,14 +8,18 @@ use diesel::{
     prelude::*,
     result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
 };
-use shared::{RecordPayload, get_hash};
+use shared::{RecordPayload, proof_of_work::get_hash};
 
 use crate::{
     AppState,
     models::{NewRecord, Record},
 };
 
-pub async fn create_record<T: RecordPayload>(
+pub trait Recordable {
+    fn get_payload(&self, state: &AppState) -> impl Future<Output = String>;
+}
+
+pub async fn create_record<T: RecordPayload + Recordable>(
     State(state): State<AppState>,
     body: Json<T>,
 ) -> impl IntoResponse {
@@ -29,10 +33,11 @@ pub async fn create_record<T: RecordPayload>(
         )
     } else {
         let values = NewRecord {
-            payload: body.as_str(),
+            payload: &body.get_payload(&state).await,
             challenge_proof: body.challenge(),
             record_type: body.record_type(),
         };
+
         match diesel::insert_into(records::table)
             .values(values)
             .returning(Record::as_returning())
@@ -52,7 +57,12 @@ pub trait RecordHandler {
     fn record_type() -> &'static str;
     fn not_found_message(id: &str) -> String;
     fn wrong_type_message(id: &str) -> String;
-    fn handle_record(rec: &Record, id: &str, headers: Option<&HeaderMap>) -> Response;
+    fn handle_record(
+        rec: &Record,
+        id: &str,
+        state: &AppState,
+        headers: Option<&HeaderMap>,
+    ) -> impl Future<Output = Response>;
 }
 
 pub async fn fetch_record<T: RecordHandler>(
@@ -77,7 +87,7 @@ pub async fn fetch_record<T: RecordHandler>(
                     .body(axum::body::Body::from(T::wrong_type_message(&id)))
                     .unwrap();
             }
-            T::handle_record(&rec, &id, headers.as_ref())
+            T::handle_record(&rec, &id, &state, headers.as_ref()).await
         }
         None => Response::builder()
             .status(404)

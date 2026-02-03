@@ -1,4 +1,4 @@
-use shared::come_up_with_solution;
+use shared::proof_of_work::come_up_with_solution;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]

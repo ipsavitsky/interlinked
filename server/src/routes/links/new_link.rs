@@ -1,10 +1,19 @@
-use crate::routes::common::create_record;
+use crate::{
+    AppState,
+    routes::common::{Recordable, create_record},
+};
 use axum::{Json, extract::State, response::IntoResponse};
-use shared::NewRecordScheme;
+use shared::NewLinkScheme;
+
+impl Recordable for NewLinkScheme {
+    async fn get_payload(&self, _state: &AppState) -> String {
+        self.payload.to_string()
+    }
+}
 
 pub async fn handler(
     state: State<crate::AppState>,
-    body: Json<NewRecordScheme>,
+    body: Json<NewLinkScheme>,
 ) -> impl IntoResponse {
     create_record(state, body).await
 }

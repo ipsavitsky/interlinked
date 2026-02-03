@@ -11,6 +11,10 @@ pub async fn start_server() -> Arc<Mutex<Child>> {
         std::fs::remove_file("interlinked.db").expect("could not remove test database");
     }
 
+    if std::fs::exists("objects").expect("could not check for object dir") {
+        std::fs::remove_dir_all("objects").expect("could not remove test object dir");
+    }
+
     let mut handle = Command::new(server_binary_path)
         .env("INTERLINKED_DB_URL", "interlinked.db")
         .spawn()

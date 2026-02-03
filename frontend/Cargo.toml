@@ -4,7 +4,7 @@ cargo-features = ["per-package-target"]
 name = "frontend"
 version = "0.1.0"
 edition = "2024"
-default-target = "wasm32-unknown-unknown"
+forced-target = "wasm32-unknown-unknown"
 
 [lib]
 crate-type = ["cdylib"]
