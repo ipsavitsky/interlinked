@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use shared::{NewLinkScheme, NewNoteScheme, RecordPayload, proof_of_work::come_up_with_solution};
+use shared::{NewLinkScheme, NewNoteScheme, RecordPayload, proof_of_work::solve_pow_challenge};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 use url::Url;
@@ -24,8 +24,7 @@ impl Default for Config {
 #[derive(Parser)]
 #[command(version, about)]
 struct Args {
-    #[arg(short, long)]
-    verbose: bool,
+    /// Path to a configuration file
     #[arg(short, long)]
     config: Option<PathBuf>,
     #[command(subcommand)]
@@ -34,10 +33,12 @@ struct Args {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Create a new resource in an interlinked instance
     New {
         #[command(subcommand)]
         subcommand: PayloadType,
     },
+    /// Resolve an id into the resource content
     Resolve {
         #[command(subcommand)]
         subcommand: RequestType,
@@ -46,17 +47,21 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PayloadType {
+    /// Create a new link
     Link { link: String },
+    /// Create a new note
     Note { filename: String },
 }
 
 #[derive(Subcommand)]
 enum RequestType {
+    /// Request a link
     Link { id: u32 },
+    /// Request a note
     Note { id: u32 },
 }
 
-async fn get_difficulty(backend_url: &Url) -> Result<usize> {
+async fn fetch_difficulty(backend_url: &Url) -> Result<usize> {
     Ok(Client::new()
         .get(backend_url.join("/api/difficulty")?)
         .send()
@@ -73,14 +78,14 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
     println!("Current difficulty: {difficulty}");
     let spinner = ProgressBar::new_spinner().with_message("Calculating hash...");
     spinner.enable_steady_tick(Duration::from_millis(100));
-    let (challenge, _) = come_up_with_solution(difficulty, seed);
+    let (challenge, _) = solve_pow_challenge(difficulty, seed);
     spinner.finish();
     println!("challenge: {challenge}");
     Ok(challenge)
 }
 
 async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Url) -> Result<()> {
-    let difficulty = get_difficulty(backend_url).await?;
+    let difficulty = fetch_difficulty(backend_url).await?;
     let challenge = calculate_hash(difficulty).await?;
     let record = payload.with_challenge(challenge);
     let post_url = backend_url.join(record.record_type())?;

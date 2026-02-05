@@ -1,4 +1,4 @@
-use shared::proof_of_work::come_up_with_solution;
+use shared::proof_of_work::solve_pow_challenge;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(start)]
@@ -8,6 +8,6 @@ pub fn start() {
 
 #[wasm_bindgen]
 pub fn solution_wrapper(diff: usize, seed: u64) -> String {
-    let (ch, _) = come_up_with_solution(diff, seed);
+    let (ch, _) = solve_pow_challenge(diff, seed);
     ch
 }

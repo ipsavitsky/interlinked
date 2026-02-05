@@ -29,7 +29,7 @@ pub async fn start_server() -> Arc<Mutex<Child>> {
     };
 }
 
-pub fn check_code(output: &Output) {
+pub fn assert_success(output: &Output) {
     if !output.status.success() {
         println!("CLI stdout: {}", String::from_utf8_lossy(&output.stdout));
         println!("CLI stderr: {}", String::from_utf8_lossy(&output.stderr));
@@ -56,6 +56,6 @@ pub async fn run_cli(command: &[&str]) -> Output {
         .await
         .expect("failed to wait for interlinked cli");
 
-    check_code(&output_query);
+    assert_success(&output_query);
     output_query
 }

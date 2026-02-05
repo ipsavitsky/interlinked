@@ -8,7 +8,7 @@ use diesel::{
     prelude::*,
     result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
 };
-use shared::{RecordPayload, proof_of_work::get_hash};
+use shared::{RecordPayload, proof_of_work::hash_string};
 
 use crate::{
     AppState,
@@ -24,7 +24,7 @@ pub async fn create_record<T: RecordPayload + Recordable>(
     body: Json<T>,
 ) -> impl IntoResponse {
     use crate::schema::records;
-    let hash = get_hash(body.challenge());
+    let hash = hash_string(body.challenge());
     let hash_prefix = "0".repeat(state.configuration.difficulty as usize);
     if !hash.starts_with(&hash_prefix) {
         (
@@ -65,7 +65,7 @@ pub trait RecordHandler {
     ) -> impl Future<Output = Response>;
 }
 
-pub async fn fetch_record<T: RecordHandler>(
+pub async fn process_record_request<T: RecordHandler>(
     Path(id): Path<String>,
     State(state): State<AppState>,
     headers: Option<HeaderMap>,

@@ -4,7 +4,7 @@ use axum::{
 };
 use object_store::ObjectStoreExt;
 
-use crate::routes::common::{RecordHandler, fetch_record};
+use crate::routes::common::{RecordHandler, process_record_request};
 use crate::{AppState, models::Record};
 
 pub struct NoteHandler;
@@ -47,5 +47,5 @@ pub async fn handler(
     id: axum::extract::Path<String>,
     state: State<crate::AppState>,
 ) -> impl IntoResponse {
-    fetch_record::<NoteHandler>(id, state, None).await
+    process_record_request::<NoteHandler>(id, state, None).await
 }

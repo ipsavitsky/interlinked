@@ -4,7 +4,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use crate::routes::common::{RecordHandler, fetch_record};
+use crate::routes::common::{RecordHandler, process_record_request};
 use crate::{AppState, models::Record};
 
 pub struct LinkHandler;
@@ -47,5 +47,5 @@ pub async fn handler(
     state: State<crate::AppState>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
-    fetch_record::<LinkHandler>(id, state, Some(headers)).await
+    process_record_request::<LinkHandler>(id, state, Some(headers)).await
 }

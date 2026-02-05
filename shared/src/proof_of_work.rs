@@ -12,16 +12,16 @@ fn make_random_string(rand: &mut StdRand) -> String {
         .collect()
 }
 
-pub fn get_hash(in_str: &str) -> String {
+pub fn hash_string(in_str: &str) -> String {
     String::from_utf8_lossy(&Hash::hash(in_str.as_bytes())).into_owned()
 }
 
-pub fn come_up_with_solution(diff: usize, seed: u64) -> (String, String) {
+pub fn solve_pow_challenge(diff: usize, seed: u64) -> (String, String) {
     let mut rand = StdRand::seed(seed);
     let prefix = "0".repeat(diff);
     loop {
         let attempt = make_random_string(&mut rand);
-        let hash = get_hash(&attempt);
+        let hash = hash_string(&attempt);
         if hash.starts_with(&prefix) {
             return (attempt, hash);
         }
