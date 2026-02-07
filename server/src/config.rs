@@ -32,22 +32,32 @@ impl Config {
 
         if let Ok(address) = env::var("INTERLINKED_ADDRESS") {
             config.address = address;
+        } else {
+            tracing::warn!("INTERLINKED_ADDRESS environment variable not set, using default");
         }
 
         if let Ok(url) = env::var("INTERLINKED_URL") {
             config.url = Url::parse(&url).expect("Failed to parse URL");
+        } else {
+            tracing::warn!("INTERLINKED_URL environment variable not set, using default");
         }
 
         if let Ok(store_dir) = env::var("INTERLINKED_STORE_DIR") {
             config.store_dir = PathBuf::from(store_dir);
+        } else {
+            tracing::warn!("INTERLINKED_STORE_DIR environment variable not set, using default");
         }
 
         if let Ok(log_level) = env::var("INTERLINKED_LOG_LEVEL") {
             config.log_level = log_level.parse().expect("Failed to parse log level");
+        } else {
+            tracing::warn!("INTERLINKED_LOG_LEVEL environment variable not set, using default");
         }
 
         if let Ok(difficulty) = env::var("INTERLINKED_DIFFICULTY") {
             config.difficulty = difficulty.parse().expect("Failed to parse difficulty");
+        } else {
+            tracing::warn!("INTERLINKED_DIFFICULTY environment variable not set, using default");
         }
 
         Ok(config)

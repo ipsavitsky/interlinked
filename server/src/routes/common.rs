@@ -1,3 +1,5 @@
+use std::any::type_name;
+
 use axum::{
     Json,
     extract::{Path, State},
@@ -26,6 +28,7 @@ pub async fn create_record<T: RecordPayload + Recordable>(
     use crate::schema::records;
     let hash = hash_string(body.challenge());
     let hash_prefix = "0".repeat(state.configuration.difficulty as usize);
+    tracing::info!("writing record of type {}", type_name::<T>());
     if !hash.starts_with(&hash_prefix) {
         (
             StatusCode::BAD_REQUEST,
@@ -72,6 +75,7 @@ pub async fn process_record_request<T: RecordHandler>(
 ) -> impl IntoResponse {
     use crate::schema::records::dsl::{id as table_id, records};
     let id_num = id.parse::<i32>().unwrap();
+    tracing::trace!("Requesting record of type {}", type_name::<T>());
     let selected_record = records
         .filter(table_id.eq(id_num))
         .select(Record::as_select())
@@ -89,9 +93,12 @@ pub async fn process_record_request<T: RecordHandler>(
             }
             T::handle_record(&rec, &id, &state, headers.as_ref()).await
         }
-        None => Response::builder()
+        None => {
+            tracing::error!("Record with id {id_num} not found!");
+            Response::builder()
             .status(404)
             .body(axum::body::Body::from(T::not_found_message(&id)))
-            .unwrap(),
+            .unwrap()
+        },
     }
 }

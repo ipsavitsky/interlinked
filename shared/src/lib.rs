@@ -2,13 +2,13 @@ use serde::{Deserialize, Serialize};
 
 pub mod proof_of_work;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NewLinkScheme {
     pub payload: url::Url,
     pub challenge: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NewNoteScheme {
     pub payload: String,
     pub challenge: String,
