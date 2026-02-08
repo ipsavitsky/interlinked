@@ -3,7 +3,7 @@ use crate::{
     routes::common::{Recordable, create_record},
 };
 use axum::{Json, extract::State, response::IntoResponse};
-use shared::NewLinkScheme;
+use shared::new_object_schemes::NewLinkScheme;
 
 impl Recordable for NewLinkScheme {
     async fn get_payload(&self, _state: &AppState) -> String {

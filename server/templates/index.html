@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>interlinked</title>
     <script type="module">
-      import init, { solution_wrapper } from "./pkg/frontend.js";
+      import init, { solution_wrapper, new_link_record } from "./pkg/frontend.js";
 
       async function run() {
         const linkInput = document.getElementById("link-input");
@@ -27,26 +27,7 @@
 
         const url = "{{url}}";
         try {
-          const writeResponse = await fetch(`${url}/link`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              payload: link,
-              challenge: result,
-            }),
-          });
-          if (writeResponse.status != 200) {
-            console.error(
-              "Error writing record: returned code",
-              writeResponse.status,
-            );
-            resultContainer.textContent =
-              "Error writing record. " + (await writeResponse.text());
-            return;
-          }
-          const recordId = await writeResponse.text();
+          const recordId = await new_link_record(url, link, result);
           const shortenedLink = `${url}/link/${recordId}`;
           resultContainer.innerHTML = `
             <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>

@@ -3,7 +3,11 @@ use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use shared::{NewLinkScheme, NewNoteScheme, RecordPayload, proof_of_work::solve_pow_challenge};
+use shared::{
+    new_object_schemes::{NewLinkScheme, NewNoteScheme, RecordPayload},
+    proof_of_work::solve_pow_challenge,
+    requests::{create_record, fetch_difficulty},
+};
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
 use url::Url;
@@ -61,16 +65,6 @@ enum RequestType {
     Note { id: u32 },
 }
 
-async fn fetch_difficulty(backend_url: &Url) -> Result<usize> {
-    Ok(Client::new()
-        .get(backend_url.join("/api/difficulty")?)
-        .send()
-        .await?
-        .text()
-        .await?
-        .parse()?)
-}
-
 async fn calculate_hash(difficulty: usize) -> Result<String> {
     let seed = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)?
@@ -84,19 +78,14 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
     Ok(challenge)
 }
 
-async fn create_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Url) -> Result<()> {
-    let difficulty = fetch_difficulty(backend_url).await?;
-    let challenge = calculate_hash(difficulty).await?;
-    let record = payload.with_challenge(challenge);
-    let post_url = backend_url.join(record.record_type())?;
-    let data = Client::new()
-        .post(post_url.as_str())
-        .json(&record)
-        .send()
-        .await?
-        .text()
-        .await?;
-    println!("Short link: {post_url}/{data}");
+async fn write_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Url) -> Result<()> {
+    let index = create_record::<T>(backend_url, &payload).await?;
+    println!(
+        "Short link: {}{}/{}",
+        backend_url,
+        payload.record_type(),
+        index
+    );
     Ok(())
 }
 
@@ -129,6 +118,8 @@ async fn main() -> Result<()> {
         }
     };
 
+    let difficulty = fetch_difficulty(&conf.backend_url).await?;
+
     match args.command {
         Commands::New {
             subcommand: PayloadType::Link { link },
@@ -136,9 +127,9 @@ async fn main() -> Result<()> {
             let payload = Url::parse(&link)?;
             let record = NewLinkScheme {
                 payload,
-                challenge: String::new(),
+                challenge: calculate_hash(difficulty).await?,
             };
-            create_record(record, &conf.backend_url).await
+            write_record(record, &conf.backend_url).await
         }
         Commands::New {
             subcommand: PayloadType::Note { filename },
@@ -146,9 +137,9 @@ async fn main() -> Result<()> {
             let payload = std::fs::read_to_string(filename)?;
             let record = NewNoteScheme {
                 payload,
-                challenge: String::new(),
+                challenge: calculate_hash(difficulty).await?,
             };
-            create_record(record, &conf.backend_url).await
+            write_record(record, &conf.backend_url).await
         }
         Commands::Resolve {
             subcommand: RequestType::Link { id },

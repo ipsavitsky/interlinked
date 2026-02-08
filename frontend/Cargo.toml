@@ -1,10 +1,7 @@
-cargo-features = ["per-package-target"]
-
 [package]
 name = "frontend"
 version = "0.1.0"
 edition = "2024"
-forced-target = "wasm32-unknown-unknown"
 
 [lib]
 crate-type = ["cdylib"]
@@ -12,4 +9,6 @@ crate-type = ["cdylib"]
 [dependencies]
 console_error_panic_hook = "0.1.7"
 shared = { version = "0.1.0", path = "../shared" }
+url.workspace = true
 wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4.58"
