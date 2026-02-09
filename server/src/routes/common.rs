@@ -10,7 +10,7 @@ use diesel::{
     prelude::*,
     result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
 };
-use shared::{RecordPayload, proof_of_work::hash_string};
+use shared::{new_object_schemes::RecordPayload, proof_of_work::hash_string};
 
 use crate::{
     AppState,

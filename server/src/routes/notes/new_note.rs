@@ -1,7 +1,7 @@
 use crate::routes::common::{Recordable, create_record};
 use axum::{Json, extract::State, response::IntoResponse};
 use object_store::{ObjectStoreExt, PutPayload, path::Path};
-use shared::NewNoteScheme;
+use shared::new_object_schemes::NewNoteScheme;
 use uuid::Uuid;
 
 impl Recordable for NewNoteScheme {
