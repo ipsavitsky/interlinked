@@ -96,9 +96,9 @@ pub async fn process_record_request<T: RecordHandler>(
         None => {
             tracing::error!("Record with id {id_num} not found!");
             Response::builder()
-            .status(404)
-            .body(axum::body::Body::from(T::not_found_message(&id)))
-            .unwrap()
-        },
+                .status(404)
+                .body(axum::body::Body::from(T::not_found_message(&id)))
+                .unwrap()
+        }
     }
 }
