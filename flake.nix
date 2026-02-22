@@ -82,6 +82,8 @@
               ++ [
                 "-p"
                 "frontend"
+                "--target"
+                "wasm32-unknown-unknown"
               ];
             copyLibs = true;
             postInstall = ''
