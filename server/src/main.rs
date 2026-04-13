@@ -73,10 +73,10 @@ async fn main() {
     let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
 
     let all_routes = Router::new()
-        .nest("/api", routes::api::router())
-        .nest("/link", routes::links::router())
-        .nest("/note", routes::notes::router())
-        .nest("/pkg", routes::assets::router())
+        .nest(shared::routes::API_PREFIX, routes::api::router())
+        .nest(shared::routes::LINKS_PREFIX, routes::links::router())
+        .nest(shared::routes::NOTES_PREFIX, routes::notes::router())
+        .nest(shared::routes::ASSETS_PREFIX, routes::assets::router())
         .route("/", get(routes::index::handler))
         .layer(cors)
         .with_state(state);

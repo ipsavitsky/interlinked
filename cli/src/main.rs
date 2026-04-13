@@ -7,6 +7,7 @@ use shared::{
     new_object_schemes::{NewLinkScheme, NewNoteScheme, RecordPayload},
     proof_of_work::solve_pow_challenge,
     requests::{create_record, fetch_difficulty},
+    routes,
 };
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime};
@@ -143,9 +144,9 @@ async fn main() -> Result<()> {
         }
         Commands::Resolve {
             subcommand: RequestType::Link { id },
-        } => resolve_record(id, "link", &conf.backend_url).await,
+        } => resolve_record(id, routes::LINKS_PREFIX, &conf.backend_url).await,
         Commands::Resolve {
             subcommand: RequestType::Note { id },
-        } => resolve_record(id, "note", &conf.backend_url).await,
+        } => resolve_record(id, routes::NOTES_PREFIX, &conf.backend_url).await,
     }
 }

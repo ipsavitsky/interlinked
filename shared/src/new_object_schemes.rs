@@ -27,7 +27,7 @@ impl RecordPayload for NewNoteScheme {
     }
 
     fn record_type(&self) -> &'static str {
-        "note"
+        "n"
     }
 
     fn challenge(&self) -> &str {
@@ -51,7 +51,7 @@ impl RecordPayload for NewLinkScheme {
     }
 
     fn record_type(&self) -> &'static str {
-        "link"
+        "l"
     }
 
     fn challenge(&self) -> &str {

@@ -19,7 +19,7 @@ pub enum RequestError {
 
 pub async fn fetch_difficulty(backend_url: &Url) -> Result<usize, RequestError> {
     Ok(Client::new()
-        .get(backend_url.join("/api/difficulty")?)
+        .get(backend_url.join(crate::routes::API_DIFFICULTY)?)
         .send()
         .await?
         .text()
