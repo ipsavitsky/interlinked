@@ -10,11 +10,11 @@ use diesel::{
     prelude::*,
     result::{DatabaseErrorKind::UniqueViolation, Error::DatabaseError},
 };
-use shared::{new_object_schemes::RecordPayload, proof_of_work::hash_string};
+use shared::{new_object_schemes::RecordPayload, proof_of_work::hash_string, routes::RecordType};
 
 use crate::{
     AppState,
-    models::{NewRecord, Record},
+    models::{DbRecordType, NewRecord, Record},
 };
 
 pub trait Recordable {
@@ -36,9 +36,9 @@ pub async fn create_record<T: RecordPayload + Recordable>(
         )
     } else {
         let values = NewRecord {
-            payload: &body.get_payload(&state).await,
-            challenge_proof: body.challenge(),
-            record_type: body.record_type(),
+            payload: body.get_payload(&state).await,
+            challenge_proof: body.challenge().to_string(),
+            record_type: DbRecordType(body.record_type()),
         };
 
         match diesel::insert_into(records::table)
@@ -57,7 +57,7 @@ pub async fn create_record<T: RecordPayload + Recordable>(
 }
 
 pub trait RecordHandler {
-    fn record_type() -> &'static str;
+    fn record_type() -> RecordType;
     fn not_found_message(id: &str) -> String;
     fn wrong_type_message(id: &str) -> String;
     fn handle_record(
@@ -85,7 +85,7 @@ pub async fn process_record_request<T: RecordHandler>(
 
     match selected_record {
         Some(rec) => {
-            if !rec.record_type.eq(T::record_type()) {
+            if rec.record_type.0 != T::record_type() {
                 return Response::builder()
                     .status(404)
                     .body(axum::body::Body::from(T::wrong_type_message(&id)))

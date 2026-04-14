@@ -4,14 +4,16 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use shared::routes::RecordType;
+
 use crate::routes::common::{RecordHandler, process_record_request};
 use crate::{AppState, models::Record};
 
 pub struct LinkHandler;
 
 impl RecordHandler for LinkHandler {
-    fn record_type() -> &'static str {
-        "link"
+    fn record_type() -> RecordType {
+        RecordType::Link
     }
 
     fn not_found_message(id: &str) -> String {

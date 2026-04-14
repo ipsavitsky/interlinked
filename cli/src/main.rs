@@ -73,7 +73,8 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
     println!("Current difficulty: {difficulty}");
     let spinner = ProgressBar::new_spinner().with_message("Calculating hash...");
     spinner.enable_steady_tick(Duration::from_millis(100));
-    let (challenge, _) = solve_pow_challenge(difficulty, seed);
+    let (challenge, _) =
+        tokio::task::spawn_blocking(move || solve_pow_challenge(difficulty, seed)).await?;
     spinner.finish();
     println!("challenge: {challenge}");
     Ok(challenge)
@@ -82,10 +83,12 @@ async fn calculate_hash(difficulty: usize) -> Result<String> {
 async fn write_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Url) -> Result<()> {
     let index = create_record::<T>(backend_url, &payload).await?;
     println!(
-        "Short link: {}{}/{}",
-        backend_url,
-        payload.record_type(),
-        index
+        "Short link: {}",
+        backend_url.join(&format!(
+            "{}/{}",
+            payload.record_type().route_prefix(),
+            index
+        ))?,
     );
     Ok(())
 }
@@ -121,6 +124,8 @@ async fn main() -> Result<()> {
 
     let difficulty = fetch_difficulty(&conf.backend_url).await?;
 
+    let hash_future = calculate_hash(difficulty);
+
     match args.command {
         Commands::New {
             subcommand: PayloadType::Link { link },
@@ -128,7 +133,7 @@ async fn main() -> Result<()> {
             let payload = Url::parse(&link)?;
             let record = NewLinkScheme {
                 payload,
-                challenge: calculate_hash(difficulty).await?,
+                challenge: hash_future.await?,
             };
             write_record(record, &conf.backend_url).await
         }
@@ -138,15 +143,29 @@ async fn main() -> Result<()> {
             let payload = std::fs::read_to_string(filename)?;
             let record = NewNoteScheme {
                 payload,
-                challenge: calculate_hash(difficulty).await?,
+                challenge: hash_future.await?,
             };
             write_record(record, &conf.backend_url).await
         }
         Commands::Resolve {
             subcommand: RequestType::Link { id },
-        } => resolve_record(id, routes::LINKS_PREFIX, &conf.backend_url).await,
+        } => {
+            resolve_record(
+                id,
+                routes::RecordType::Link.route_prefix(),
+                &conf.backend_url,
+            )
+            .await
+        }
         Commands::Resolve {
             subcommand: RequestType::Note { id },
-        } => resolve_record(id, routes::NOTES_PREFIX, &conf.backend_url).await,
+        } => {
+            resolve_record(
+                id,
+                routes::RecordType::Note.route_prefix(),
+                &conf.backend_url,
+            )
+            .await
+        }
     }
 }

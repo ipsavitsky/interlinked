@@ -3,6 +3,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use object_store::ObjectStoreExt;
+use shared::routes::RecordType;
 
 use crate::routes::common::{RecordHandler, process_record_request};
 use crate::{AppState, models::Record};
@@ -10,8 +11,8 @@ use crate::{AppState, models::Record};
 pub struct NoteHandler;
 
 impl RecordHandler for NoteHandler {
-    fn record_type() -> &'static str {
-        "note"
+    fn record_type() -> RecordType {
+        RecordType::Note
     }
 
     fn not_found_message(id: &str) -> String {

@@ -27,7 +27,7 @@ async fn test_write_link() {
     let server = start_server().await;
     run_cli(&["new", "link", "http://gitlab.com"]).await;
     let data = Client::new()
-        .get("http://localhost:3000/link/1")
+        .get("http://localhost:3000/l/1")
         .send()
         .await
         .expect("Could not query backend")
@@ -49,7 +49,7 @@ async fn test_write_note() {
     let server = start_server().await;
     run_cli(&["new", "note", "tests/test/test_note"]).await;
     let data = Client::new()
-        .get("http://localhost:3000/note/1")
+        .get("http://localhost:3000/n/1")
         .send()
         .await
         .expect("Could not query backend")

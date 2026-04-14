@@ -28,7 +28,7 @@
         const url = "{{url}}";
         try {
           const recordId = await new_link_record(url, link, result);
-          const shortenedLink = `${url}/link/${recordId}`;
+          const shortenedLink = `${url}/l/${recordId}`;
           resultContainer.innerHTML = `
             <p>Shortened Link: <a href="${shortenedLink}" target="_blank">${shortenedLink}</a></p>
           `;

@@ -74,8 +74,14 @@ async fn main() {
 
     let all_routes = Router::new()
         .nest(shared::routes::API_PREFIX, routes::api::router())
-        .nest(shared::routes::LINKS_PREFIX, routes::links::router())
-        .nest(shared::routes::NOTES_PREFIX, routes::notes::router())
+        .nest(
+            shared::routes::RecordType::Link.route_prefix(),
+            routes::links::router(),
+        )
+        .nest(
+            shared::routes::RecordType::Note.route_prefix(),
+            routes::notes::router(),
+        )
         .nest(shared::routes::ASSETS_PREFIX, routes::assets::router())
         .route("/", get(routes::index::handler))
         .layer(cors)

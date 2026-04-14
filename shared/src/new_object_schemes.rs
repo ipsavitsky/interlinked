@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::routes::RecordType;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct NewLinkScheme {
     pub payload: url::Url,
@@ -14,7 +16,7 @@ pub struct NewNoteScheme {
 
 pub trait RecordPayload {
     fn payload(&self) -> &str;
-    fn record_type(&self) -> &'static str;
+    fn record_type(&self) -> RecordType;
     fn challenge(&self) -> &str;
     fn with_challenge(&self, challenge: String) -> Self
     where
@@ -26,8 +28,8 @@ impl RecordPayload for NewNoteScheme {
         &self.payload
     }
 
-    fn record_type(&self) -> &'static str {
-        "n"
+    fn record_type(&self) -> RecordType {
+        RecordType::Note
     }
 
     fn challenge(&self) -> &str {
@@ -50,8 +52,8 @@ impl RecordPayload for NewLinkScheme {
         self.payload.as_str()
     }
 
-    fn record_type(&self) -> &'static str {
-        "l"
+    fn record_type(&self) -> RecordType {
+        RecordType::Link
     }
 
     fn challenge(&self) -> &str {

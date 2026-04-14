@@ -32,7 +32,7 @@ pub async fn create_record<T: RecordPayload + Serialize>(
     payload: &T,
 ) -> Result<String, RequestError> {
     let record = payload.with_challenge(payload.challenge().to_string());
-    let post_url = backend_url.join(record.record_type())?;
+    let post_url = backend_url.join(record.record_type().route_prefix())?;
     Ok(Client::new()
         .post(post_url.as_str())
         .json(&record)
