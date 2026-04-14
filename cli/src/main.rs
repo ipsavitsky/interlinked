@@ -9,8 +9,8 @@ use shared::{
     requests::{create_record, fetch_difficulty},
     routes,
 };
-use std::{io::Read, path::PathBuf};
 use std::time::{Duration, SystemTime};
+use std::{io::Read, path::PathBuf};
 use url::Url;
 
 #[derive(Deserialize)]
@@ -141,14 +141,12 @@ async fn main() -> Result<()> {
             subcommand: PayloadType::Note { filename },
         } => {
             let payload = match filename {
-                Some(file) => {
-                    std::fs::read_to_string(file)?
-                },
+                Some(file) => std::fs::read_to_string(file)?,
                 None => {
                     let mut buffer = String::new();
                     std::io::stdin().read_to_string(&mut buffer)?;
                     buffer
-                },
+                }
             };
             let record = NewNoteScheme {
                 payload,

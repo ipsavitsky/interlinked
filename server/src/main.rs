@@ -1,4 +1,8 @@
-use axum::{Router, routing::get, http::{HeaderValue, header, Method}};
+use axum::{
+    Router,
+    http::{HeaderValue, Method, header},
+    routing::get,
+};
 use config::Config;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -69,7 +73,6 @@ async fn main() {
 
     let address = conf.address.clone();
 
-
     let origins: Vec<HeaderValue> = conf
         .allowed_origins
         .iter()
@@ -79,12 +82,7 @@ async fn main() {
     let cors = CorsLayer::new()
         .allow_origin(origins)
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
-        .allow_methods([
-            Method::GET,
-            Method::POST,
-            Method::PUT,
-            Method::DELETE,
-        ]);
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE]);
 
     let state = AppState::new(conf);
 
