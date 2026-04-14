@@ -9,7 +9,7 @@ use shared::{
     requests::{create_record, fetch_difficulty},
     routes,
 };
-use std::path::PathBuf;
+use std::{io::Read, path::PathBuf};
 use std::time::{Duration, SystemTime};
 use url::Url;
 
@@ -55,7 +55,7 @@ enum PayloadType {
     /// Create a new link
     Link { link: String },
     /// Create a new note
-    Note { filename: String },
+    Note { filename: Option<String> },
 }
 
 #[derive(Subcommand)]
@@ -140,7 +140,16 @@ async fn main() -> Result<()> {
         Commands::New {
             subcommand: PayloadType::Note { filename },
         } => {
-            let payload = std::fs::read_to_string(filename)?;
+            let payload = match filename {
+                Some(file) => {
+                    std::fs::read_to_string(file)?
+                },
+                None => {
+                    let mut buffer = String::new();
+                    std::io::stdin().read_to_string(&mut buffer)?;
+                    buffer
+                },
+            };
             let record = NewNoteScheme {
                 payload,
                 challenge: hash_future.await?,
