@@ -1,4 +1,4 @@
-use axum::{Router, routing::get};
+use axum::{Router, routing::get, http::{HeaderValue, header, Method}};
 use config::Config;
 use diesel::prelude::*;
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -7,7 +7,7 @@ use std::{
     path::Path,
     sync::{Arc, Mutex},
 };
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 
 pub mod config;
 pub mod models;
@@ -67,10 +67,26 @@ async fn main() {
         .with_max_level(conf.log_level)
         .init();
 
-    let address = conf.address.clone(); // FIXME
+    let address = conf.address.clone();
+
+
+    let origins: Vec<HeaderValue> = conf
+        .allowed_origins
+        .iter()
+        .filter_map(|o| o.parse().ok())
+        .collect();
+
+    let cors = CorsLayer::new()
+        .allow_origin(origins)
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+        ]);
+
     let state = AppState::new(conf);
-    // fix this ahh cors policy
-    let cors = CorsLayer::new().allow_origin(Any).allow_headers(Any);
 
     let all_routes = Router::new()
         .nest(shared::routes::API_PREFIX, routes::api::router())

@@ -11,6 +11,7 @@ pub struct Config {
     pub store_dir: PathBuf,
     pub log_level: Level,
     pub difficulty: u32,
+    pub allowed_origins: Vec<String>,
 }
 
 impl Default for Config {
@@ -21,6 +22,7 @@ impl Default for Config {
             store_dir: PathBuf::from("./"),
             log_level: Level::INFO,
             difficulty: 1,
+            allowed_origins: Vec::new(),
         }
     }
 }
@@ -58,6 +60,15 @@ impl Config {
             config.difficulty = difficulty.parse().expect("Failed to parse difficulty");
         } else {
             tracing::warn!("INTERLINKED_DIFFICULTY environment variable not set, using default");
+        }
+
+        if let Ok(origins) = env::var("INTERLINKED_ALLOWED_ORIGINS") {
+            config.allowed_origins = origins.split(',').map(|s| s.trim().to_string()).collect();
+        } else {
+            tracing::warn!(
+                "INTERLINKED_ALLOWED_ORIGINS environment variable not set, using server URL"
+            );
+            config.allowed_origins = vec![config.url.to_string()];
         }
 
         Ok(config)
