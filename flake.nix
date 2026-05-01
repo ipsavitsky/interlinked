@@ -66,30 +66,7 @@
             src = ./.;
             buildInputs = with pkgs; [
               sqlite
-              frontend-wasm
             ];
-            preBuild = ''
-              ln -s ${frontend-wasm}/lib server/pkg
-            '';
-          };
-          frontend-wasm = naersk-lib.buildPackage {
-            pname = "frontend";
-            src = ./.;
-            buildInputs = with pkgs; [ wasm-bindgen-cli_0_2_108 ];
-            cargoBuildOptions =
-              x:
-              x
-              ++ [
-                "-p"
-                "frontend"
-                "--target"
-                "wasm32-unknown-unknown"
-              ];
-            copyLibs = true;
-            postInstall = ''
-              mkdir -p $out/lib
-              wasm-bindgen --target web --out-dir $out/lib $out/lib/frontend.wasm
-            '';
           };
           default = self.packages.${system}.server;
         };
@@ -99,13 +76,13 @@
             buildInputs = [
               rustToolchain
               diesel-cli
+              trunk
+              leptosfmt
               lazysql
               sqlite
               pkg-config
               openssl
               nil
-              bun
-              wasm-bindgen-cli_0_2_108
               just
               cargo-machete
               watchexec

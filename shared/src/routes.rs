@@ -3,7 +3,6 @@ use std::fmt;
 
 pub const API_PREFIX: &str = "/api";
 pub const API_DIFFICULTY: &str = "/api/difficulty";
-pub const ASSETS_PREFIX: &str = "/pkg";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

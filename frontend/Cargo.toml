@@ -3,12 +3,9 @@ name = "frontend"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-crate-type = ["cdylib"]
+[[bin]]
+name = "frontend"
+path = "src/main.rs"
 
 [dependencies]
-console_error_panic_hook = "0.1.7"
-shared = { version = "0.1.0", path = "../shared" }
-url.workspace = true
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4.58"
+leptos = "0.8.19"

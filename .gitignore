@@ -5,3 +5,4 @@ db
 server/pkg
 interlinked.db
 objects
+dist/

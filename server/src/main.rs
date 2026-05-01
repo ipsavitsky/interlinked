@@ -96,7 +96,6 @@ async fn main() {
             shared::routes::RecordType::Note.route_prefix(),
             routes::notes::router(),
         )
-        .nest(shared::routes::ASSETS_PREFIX, routes::assets::router())
         .route("/", get(routes::index::handler))
         .layer(cors)
         .with_state(state);
