@@ -8,4 +8,6 @@ name = "frontend"
 path = "src/main.rs"
 
 [dependencies]
-leptos = "0.8.19"
+leptos = { version = "0.8.19", features = ["csr"] }
+shared = { version = "0.1.0", path = "../shared" }
+url = { workspace = true }
