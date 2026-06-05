@@ -1,7 +1,7 @@
-use leptos::task::spawn_local;
-use leptos::{ev::SubmitEvent};
-use leptos::prelude::*;
+use leptos::ev::SubmitEvent;
 use leptos::html::{Input, Textarea};
+use leptos::prelude::*;
+use leptos::task::spawn_local;
 use shared::proof_of_work::solve_pow_challenge;
 use shared::requests::fetch_difficulty;
 use url::Url;
@@ -25,11 +25,11 @@ fn App() -> impl IntoView {
 
     view! {
         <h2>{difficulty}</h2>
-        <PayloadComputationComponent/>
+        <PayloadComputationComponent />
         <h2>"Input link"</h2>
-        <LinkInputComponent/>
+        <LinkInputComponent />
         <h2>"Input note"</h2>
-        <NoteInputComponent/>
+        <NoteInputComponent />
     }
 }
 
@@ -60,22 +60,15 @@ fn LinkInputComponent() -> impl IntoView {
     let on_submit = move |ev: SubmitEvent| {
         ev.prevent_default();
 
-
-
-        let value = input_element.get()
-            .expect("<input> to exist")
-            .value();
+        let value = input_element.get().expect("<input> to exist").value();
 
         set_name.set(value);
     };
 
     view! {
         <form on:submit=on_submit>
-            <input type="text"
-                value=name
-                node_ref=input_element
-            />
-            <input type="submit" value="Submit"/>
+            <input type="text" value=name node_ref=input_element />
+            <input type="submit" value="Submit" />
         </form>
         <p>"Link is: " {name}</p>
     }
@@ -89,19 +82,15 @@ fn NoteInputComponent() -> impl IntoView {
     let on_submit = move |ev: SubmitEvent| {
         ev.prevent_default(); // says this stops the page from reloading, why would it reload?
 
-        let value = textarea_element.get()
-            .expect("<input> to exist")
-            .value();
+        let value = textarea_element.get().expect("<input> to exist").value();
 
         set_name.set(value);
     };
 
     view! {
         <form on:submit=on_submit>
-            <textarea
-                node_ref=textarea_element
-            />
-            <input type="submit" value="Submit"/>
+            <textarea node_ref=textarea_element />
+            <input type="submit" value="Submit" />
         </form>
         <p>"Link is: " {name}</p>
     }

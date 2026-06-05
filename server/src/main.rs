@@ -1,7 +1,6 @@
 use axum::{
     Router,
     http::{HeaderValue, Method, header},
-    routing::get,
 };
 use config::Config;
 use diesel::prelude::*;
@@ -96,7 +95,6 @@ async fn main() {
             shared::routes::RecordType::Note.route_prefix(),
             routes::notes::router(),
         )
-        .route("/", get(routes::index::handler))
         .layer(cors)
         .with_state(state);
 
