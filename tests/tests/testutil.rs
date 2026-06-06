@@ -16,7 +16,6 @@ pub async fn start_server() -> Arc<Mutex<Child>> {
     }
 
     let mut handle = Command::new(server_binary_path)
-        .env("INTERLINKED_DB_URL", "interlinked.db")
         .spawn()
         .expect("failed to start interlinked server");
 

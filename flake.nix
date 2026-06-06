@@ -42,7 +42,7 @@
           formatting = treefmtModule.config.build.check self;
         };
 
-        packages = rec {
+        packages = {
           cli = naersk-lib.buildPackage {
             pname = "cli";
             cargoBuildOptions =

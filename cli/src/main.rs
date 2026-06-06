@@ -1,4 +1,5 @@
 use anyhow::Result;
+use chrono::Utc;
 use clap::{Parser, Subcommand};
 use indicatif::ProgressBar;
 use reqwest::Client;
@@ -9,7 +10,6 @@ use shared::{
     requests::{create_record, fetch_difficulty},
     routes,
 };
-use std::time::{Duration, SystemTime};
 use std::{io::Read, path::PathBuf};
 use url::Url;
 
@@ -67,9 +67,7 @@ enum RequestType {
 }
 
 async fn calculate_hash(difficulty: usize) -> Result<String> {
-    let seed = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_secs();
+    let seed = Utc::now().timestamp() as u64;
     println!("Current difficulty: {difficulty}");
     let spinner = ProgressBar::new_spinner().with_message("Calculating hash...");
     spinner.enable_steady_tick(Duration::from_millis(100));
