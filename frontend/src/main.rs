@@ -1,10 +1,31 @@
+use chrono::Utc;
+use js_sys::global;
 use leptos::ev::SubmitEvent;
 use leptos::html::{Input, Textarea};
 use leptos::prelude::*;
-use leptos::task::spawn_local;
+use leptos_workers::worker;
+use serde::{Deserialize, Serialize};
 use shared::proof_of_work::solve_pow_challenge;
 use shared::requests::fetch_difficulty;
 use url::Url;
+use wasm_bindgen::JsCast;
+
+#[derive(Clone, Serialize, Deserialize)]
+struct PowRequest {
+    difficulty: usize,
+    seed: u64,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+struct PowResponse {
+    attempt: String,
+}
+
+#[worker(PowWorker)]
+fn solve_pow(req: PowRequest) -> PowResponse {
+    let (attempt, _) = solve_pow_challenge(req.difficulty, req.seed);
+    PowResponse { attempt }
+}
 
 #[component]
 fn App() -> impl IntoView {
@@ -25,7 +46,13 @@ fn App() -> impl IntoView {
 
     view! {
         <h2>{difficulty}</h2>
-        <PayloadComputationComponent />
+        {move || {
+            difficulty_data
+                .with(|opt| match opt {
+                    Some(Ok(val)) => Some(view! { <PayloadComputationComponent difficulty=*val /> }),
+                    _ => None,
+                })
+        }}
         <h2>"Input link"</h2>
         <LinkInputComponent />
         <h2>"Input note"</h2>
@@ -34,22 +61,27 @@ fn App() -> impl IntoView {
 }
 
 #[component]
-fn PayloadComputationComponent() -> impl IntoView {
-    let (pending, set_pending) = signal(true);
-    let (payload, set_payload) = signal(String::new());
-
-    spawn_local(async move {
-        let (res, _) = solve_pow_challenge(2, 0);
-        set_payload.set(res);
-        set_pending.set(false);
+fn PayloadComputationComponent(difficulty: usize) -> impl IntoView {
+    let pow_data = LocalResource::new(move || {
+        let difficulty = difficulty;
+        async move {
+            solve_pow(PowRequest {
+                difficulty,
+                seed: Utc::now().timestamp() as u64,
+            })
+            .await
+        }
     });
 
-    view! {
-        <p>
-            "Payload is: "
-            {move || if pending.get() { "*calculating*".to_string() } else { payload.get() }}
-        </p>
-    }
+    let pow_payload = move || {
+        pow_data.with(|opt| match opt {
+            Some(Ok(res)) => res.attempt.clone(),
+            Some(Err(e)) => format!("Error: {e}"),
+            None => "*calculating*".to_string(),
+        })
+    };
+
+    view! { <p>"Payload is: " {pow_payload}</p> }
 }
 
 #[component]
@@ -96,10 +128,9 @@ fn NoteInputComponent() -> impl IntoView {
     }
 }
 
-// This `main` function is the entry point into the app
-// It just mounts our component to the <body>
-// Because we defined it as `fn App`, we can now use it in a
-// template as <App/>
 fn main() {
-    leptos::mount::mount_to_body(App)
+    if global().dyn_ref::<web_sys::Window>().is_some() {
+        console_error_panic_hook::set_once();
+        leptos::mount::mount_to_body(App)
+    }
 }
