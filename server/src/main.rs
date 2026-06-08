@@ -10,7 +10,7 @@ use std::{
     path::Path,
     sync::{Arc, Mutex},
 };
-use tower_http::cors::CorsLayer;
+use tower_http::{cors::CorsLayer, services::ServeDir};
 
 pub mod config;
 pub mod models;
@@ -83,6 +83,8 @@ async fn main() {
         .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
         .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE]);
 
+    let frontend_dir = conf.frontend_dir.clone();
+
     let state = AppState::new(conf);
 
     let all_routes = Router::new()
@@ -95,6 +97,7 @@ async fn main() {
             shared::routes::RecordType::Note.route_prefix(),
             routes::notes::router(),
         )
+        .fallback_service(ServeDir::new(frontend_dir))
         .layer(cors)
         .with_state(state);
 

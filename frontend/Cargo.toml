@@ -16,5 +16,5 @@ leptos_workers = "0.3.0"
 serde = { version = "1", features = ["derive"] }
 shared = { version = "0.1.0", path = "../shared" }
 url = { workspace = true }
-wasm-bindgen = "0.2"
+wasm-bindgen = "=0.2.121"
 web-sys = "0.3"

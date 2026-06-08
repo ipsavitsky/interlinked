@@ -12,6 +12,7 @@ pub struct Config {
     pub log_level: Level,
     pub difficulty: u32,
     pub allowed_origins: Vec<String>,
+    pub frontend_dir: PathBuf,
 }
 
 impl Default for Config {
@@ -23,6 +24,7 @@ impl Default for Config {
             log_level: Level::INFO,
             difficulty: 1,
             allowed_origins: Vec::new(),
+            frontend_dir: PathBuf::from("./frontend/dist"),
         }
     }
 }
@@ -69,6 +71,12 @@ impl Config {
                 "INTERLINKED_ALLOWED_ORIGINS environment variable not set, using server URL"
             );
             config.allowed_origins = vec![config.url.to_string()];
+        }
+
+        if let Ok(front_dir) = env::var("INTERLINKED_FRONTEND_DIR") {
+            config.frontend_dir = PathBuf::from(front_dir);
+        } else {
+            tracing::warn!("INTERLINKED_FRONTEND_DIR environment variable not set, using default");
         }
 
         Ok(config)

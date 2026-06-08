@@ -3,7 +3,7 @@ build:
     cd frontend && trunk build
 
 watch:
-    watchexec -r -e rs,toml,html -- cargo run -p server & cd frontend && trunk serve -p 3001
+    watchexec -r -e rs,toml,html -- sh -c "just build && cargo run -p server"
 
 fmt:
     cargo fmt

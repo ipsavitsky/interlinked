@@ -79,6 +79,7 @@ in
           "INTERLINKED_STORE_DIR=${cfg.dataDir}"
           "INTERLINKED_LOG_LEVEL=${cfg.logLevel}"
           "INTERLINKED_DIFFICULTY=${builtins.toString cfg.difficulty}"
+          "INTERLINKED_FRONTEND_DIR=${interlinked.${pkgs.stdenv.hostPlatform.system}.frontend}"
         ];
         Restart = "on-failure";
         User = cfg.user;

@@ -68,6 +68,32 @@
               sqlite
             ];
           };
+          frontend =
+            let
+              # Build deps with naersk to get vendored crate sources.
+              # Multi-step (default) so passthru.builtDependencies is populated.
+              depsBuild = naersk-lib.buildPackage {
+                pname = "frontend-deps";
+                src = ./.;
+                cargoBuildOptions = x: x ++ [ "-p" "frontend" "--target" "wasm32-unknown-unknown" ];
+                mode = "check";
+                release = true;
+              };
+              depsDrv = builtins.head depsBuild.passthru.builtDependencies;
+            in
+            pkgs.runCommandLocal "frontend" {
+              nativeBuildInputs = [ pkgs.trunk pkgs.wasm-bindgen-cli_0_2_121 pkgs.binaryen rustToolchain ];
+            } ''
+              cp -r ${./.} src
+              chmod -R +w src
+              cd src/frontend
+
+              export CARGO_HOME=$PWD/../.cargo-home
+              mkdir -p $CARGO_HOME
+              cp ${depsDrv.cargoconfig} $CARGO_HOME/config.toml
+
+              trunk build --offline --release --dist $out
+            '';
           default = self.packages.${system}.server;
         };
         devShells.default =
