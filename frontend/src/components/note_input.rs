@@ -4,11 +4,9 @@ use url::Url;
 use web_sys::SubmitEvent;
 
 #[component]
-pub fn NoteInputComponent(payload: ReadSignal<Option<String>>) -> impl IntoView {
+pub fn NoteInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url) -> impl IntoView {
     let (name, set_name) = signal(None::<String>);
     let textarea_element: NodeRef<Textarea> = NodeRef::new();
-
-    let backend_url = Url::parse("http://localhost:3000").unwrap();
 
     let on_submit = move |ev: SubmitEvent| {
         ev.prevent_default(); // says this stops the page from reloading, why would it reload?

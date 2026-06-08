@@ -8,8 +8,10 @@ pub fn App() -> impl IntoView {
     let (payload, set_payload) = signal(None::<String>);
     let backend_url: Url = Url::parse("http://localhost:3000").unwrap();
 
+    let value_for_prop = backend_url.clone();
+    let value_for_resource = value_for_prop.clone();
     let difficulty_data = LocalResource::new(move || {
-        let url = backend_url.clone();
+        let url = value_for_resource.clone();
         async move { fetch_difficulty(&url).await }
     });
 
@@ -20,6 +22,7 @@ pub fn App() -> impl IntoView {
             None => "Loading...".to_string(),
         })
     };
+
 
     view! {
         <h2>{difficulty}</h2>
@@ -37,8 +40,8 @@ pub fn App() -> impl IntoView {
                 })
         }}
         <h2>"Input link"</h2>
-        <LinkInputComponent payload=payload />
+        <LinkInputComponent payload=payload backend_url=value_for_prop />
         <h2>"Input note"</h2>
-        <NoteInputComponent payload=payload />
+        <NoteInputComponent payload=payload backend_url=backend_url />
     }
 }

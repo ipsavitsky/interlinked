@@ -4,11 +4,9 @@ use url::Url;
 use web_sys::SubmitEvent;
 
 #[component]
-pub fn LinkInputComponent(payload: ReadSignal<Option<String>>) -> impl IntoView {
+pub fn LinkInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url) -> impl IntoView {
     let (name, set_name) = signal(None::<String>);
     let input_element: NodeRef<Input> = NodeRef::new();
-
-    let backend_url = Url::parse("http://localhost:3000").unwrap();
 
     let on_submit = move |ev: SubmitEvent| {
         ev.prevent_default();
