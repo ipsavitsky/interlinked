@@ -10,7 +10,7 @@ use shared::{
     requests::{create_record, fetch_difficulty},
     routes,
 };
-use std::{io::Read, path::PathBuf};
+use std::{io::Read, path::PathBuf, time::Duration};
 use url::Url;
 
 #[derive(Deserialize)]
