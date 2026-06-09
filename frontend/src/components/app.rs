@@ -23,7 +23,6 @@ pub fn App() -> impl IntoView {
         })
     };
 
-
     view! {
         <h2>{difficulty}</h2>
         {move || {

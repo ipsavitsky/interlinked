@@ -18,17 +18,17 @@ pub fn LinkInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url)
                 &backend_url,
                 &NewLinkScheme {
                     payload: value,
-                    challenge: payload.get().unwrap(),
+                    challenge: payload.get_untracked().unwrap(),
                 },
             )
             .await;
             match ret {
-                Ok(link) => set_name.set(Some(format!(
-                    "{}{}/{}",
-                    backend_url,
-                    RecordType::Link.route_prefix(),
-                    link
-                ))),
+                Ok(link) => set_name.set(Some(
+                    backend_url
+                        .join(&format!("{}/{}", RecordType::Link.route_prefix(), link))
+                        .unwrap()
+                        .to_string(),
+                )),
                 Err(e) => set_name.set(Some(e.to_string())),
             }
         });

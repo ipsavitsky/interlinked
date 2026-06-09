@@ -17,17 +17,17 @@ pub fn NoteInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url)
                 &backend_url,
                 &NewNoteScheme {
                     payload: value,
-                    challenge: payload.get().unwrap(),
+                    challenge: payload.get_untracked().unwrap(),
                 },
             )
             .await;
             match ret {
-                Ok(link) => set_name.set(Some(format!(
-                    "{}{}/{}",
-                    backend_url,
-                    RecordType::Note.route_prefix(),
-                    link
-                ))),
+                Ok(link) => set_name.set(Some(
+                    backend_url
+                        .join(&format!("{}/{}", RecordType::Note.route_prefix(), link))
+                        .unwrap()
+                        .to_string(),
+                )),
                 Err(e) => set_name.set(Some(e.to_string())),
             }
         });
