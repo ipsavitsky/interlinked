@@ -6,7 +6,7 @@ use url::Url;
 #[component]
 pub fn App() -> impl IntoView {
     let (payload, set_payload) = signal(None::<String>);
-    let backend_url: Url = Url::parse("http://localhost:3000").unwrap();
+    let backend_url = Url::parse(&window().origin()).unwrap();
 
     let value_for_prop = backend_url.clone();
     let value_for_resource = value_for_prop.clone();
