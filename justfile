@@ -8,3 +8,6 @@ watch:
 fmt:
     cargo fmt
     leptosfmt frontend/src
+
+test: build
+    cargo test
