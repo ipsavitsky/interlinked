@@ -10,7 +10,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: CfirTsabari/actions-rs-toolchain@fcebefd2149855a4b12c9ee62208ed0f622de15b
-      - run: cargo install wasm-bindgen-cli --version 0.2.108
+      - run: cargo install trunk --locked
       - uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Run tests
         env:
