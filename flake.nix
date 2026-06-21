@@ -34,12 +34,15 @@
           rustc = rustToolchain;
         };
         treefmtModule = treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix;
-      in
+      in rec
       {
         formatter = treefmtModule.config.build.wrapper;
 
         checks = {
           formatting = treefmtModule.config.build.check self;
+          server_x86-64_linux = packages.server;
+          cli_x86-64_linux = packages.cli;
+          frontend_x86-64_linux = packages.frontend;
         };
 
         packages = {
