@@ -24,11 +24,14 @@ fn solve_pow(req: PowRequest) -> PowResponse {
 #[component]
 pub fn PayloadComputationComponent(
     difficulty: usize,
+    reload: Trigger,
     payload: WriteSignal<Option<String>>,
 ) -> impl IntoView {
     let pow_data = LocalResource::new(move || {
-        let difficulty = difficulty;
+        reload.track();
+        payload.set(None);
         async move {
+            tracing::debug!("calculating pow challenge");
             solve_pow(PowRequest {
                 difficulty,
                 seed: Utc::now().timestamp() as u64,
@@ -37,16 +40,21 @@ pub fn PayloadComputationComponent(
         }
     });
 
-    let pow_payload = move || {
-        pow_data.with(|opt| match opt {
-            Some(Ok(res)) => {
-                payload.set(Some(res.attempt.clone()));
-                res.attempt.clone()
-            }
-            Some(Err(e)) => format!("Error: {e}"),
-            None => "*calculating*".to_string(),
-        })
-    };
-
-    view! { <p>"Payload is: " {pow_payload}</p> }
+    view! {
+        <Suspense
+            fallback=move || view! { <p>"*calculating*"</p> }
+        >
+            <p>"Payload is: "
+                {move || Suspend::new(async move {
+                    match pow_data.await {
+                        Ok(res) => {
+                            payload.set(Some(res.attempt.clone()));
+                            res.attempt
+                        }
+                        Err(e) => format!("Error: {e}"),
+                    }
+                })}
+            </p>
+        </Suspense>
+    }
 }

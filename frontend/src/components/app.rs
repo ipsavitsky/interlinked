@@ -6,6 +6,7 @@ use url::Url;
 #[component]
 pub fn App() -> impl IntoView {
     let (payload, set_payload) = signal(None::<String>);
+    let reload = Trigger::new();
     let backend_url = Url::parse(&window().origin()).unwrap();
 
     let value_for_prop = backend_url.clone();
@@ -31,7 +32,10 @@ pub fn App() -> impl IntoView {
                     Some(Ok(val)) => {
                         Some(
                             view! {
-                                <PayloadComputationComponent difficulty=*val payload=set_payload />
+                                <PayloadComputationComponent
+                                    difficulty=*val
+                                    reload
+                                    payload=set_payload />
                             },
                         )
                     }
@@ -39,8 +43,8 @@ pub fn App() -> impl IntoView {
                 })
         }}
         <h2>"Input link"</h2>
-        <LinkInputComponent payload=payload backend_url=value_for_prop />
+        <LinkInputComponent payload reload backend_url=value_for_prop />
         <h2>"Input note"</h2>
-        <NoteInputComponent payload=payload backend_url=backend_url />
+        <NoteInputComponent payload reload backend_url=backend_url />
     }
 }

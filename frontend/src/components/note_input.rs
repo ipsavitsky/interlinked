@@ -4,7 +4,11 @@ use url::Url;
 use web_sys::SubmitEvent;
 
 #[component]
-pub fn NoteInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url) -> impl IntoView {
+pub fn NoteInputComponent(
+    payload: ReadSignal<Option<String>>,
+    reload: Trigger,
+    backend_url: Url,
+) -> impl IntoView {
     let (name, set_name) = signal(None::<String>);
     let textarea_element: NodeRef<Textarea> = NodeRef::new();
 
@@ -21,6 +25,7 @@ pub fn NoteInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url)
                 },
             )
             .await;
+            reload.notify();
             match ret {
                 Ok(link) => set_name.set(Some(
                     backend_url

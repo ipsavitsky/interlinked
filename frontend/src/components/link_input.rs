@@ -4,7 +4,11 @@ use url::Url;
 use web_sys::SubmitEvent;
 
 #[component]
-pub fn LinkInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url) -> impl IntoView {
+pub fn LinkInputComponent(
+    payload: ReadSignal<Option<String>>,
+    reload: Trigger,
+    backend_url: Url,
+) -> impl IntoView {
     let (name, set_name) = signal(None::<String>);
     let input_element: NodeRef<Input> = NodeRef::new();
 
@@ -22,6 +26,7 @@ pub fn LinkInputComponent(payload: ReadSignal<Option<String>>, backend_url: Url)
                 },
             )
             .await;
+            reload.notify();
             match ret {
                 Ok(link) => set_name.set(Some(
                     backend_url

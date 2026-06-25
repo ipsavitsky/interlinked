@@ -34,8 +34,8 @@
           rustc = rustToolchain;
         };
         treefmtModule = treefmt-nix.lib.evalModule pkgs ./nix/treefmt.nix;
-      in rec
-      {
+      in
+      rec {
         formatter = treefmtModule.config.build.wrapper;
 
         checks = {
