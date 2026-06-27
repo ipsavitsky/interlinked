@@ -1,4 +1,5 @@
 pub mod app;
+mod input_component;
 pub mod link_input;
 pub mod note_input;
 pub mod payload_computation;

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 use crate::routes::RecordType;
 
@@ -15,58 +16,47 @@ pub struct NewNoteScheme {
 }
 
 pub trait RecordPayload {
+    fn from_parts(payload: String, challenge: String) -> Self;
     fn payload(&self) -> &str;
-    fn record_type(&self) -> RecordType;
+    fn record_type() -> RecordType;
     fn challenge(&self) -> &str;
-    fn with_challenge(&self, challenge: String) -> Self
-    where
-        Self: Sized;
 }
 
 impl RecordPayload for NewNoteScheme {
+    fn from_parts(payload: String, challenge: String) -> Self {
+        NewNoteScheme { payload, challenge }
+    }
+
     fn payload(&self) -> &str {
         &self.payload
     }
 
-    fn record_type(&self) -> RecordType {
+    fn record_type() -> RecordType {
         RecordType::Note
     }
 
     fn challenge(&self) -> &str {
         &self.challenge
     }
-
-    fn with_challenge(&self, challenge: String) -> Self
-    where
-        Self: Sized,
-    {
-        NewNoteScheme {
-            payload: self.payload.clone(),
-            challenge,
-        }
-    }
 }
 
 impl RecordPayload for NewLinkScheme {
+    fn from_parts(payload: String, challenge: String) -> Self {
+        NewLinkScheme {
+            payload: Url::parse(&payload).unwrap(),
+            challenge,
+        }
+    }
+
     fn payload(&self) -> &str {
         self.payload.as_str()
     }
 
-    fn record_type(&self) -> RecordType {
+    fn record_type() -> RecordType {
         RecordType::Link
     }
 
     fn challenge(&self) -> &str {
         &self.challenge
-    }
-
-    fn with_challenge(&self, challenge: String) -> Self
-    where
-        Self: Sized,
-    {
-        NewLinkScheme {
-            payload: self.payload.clone(),
-            challenge,
-        }
     }
 }

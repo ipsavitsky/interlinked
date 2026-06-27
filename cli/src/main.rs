@@ -82,11 +82,7 @@ async fn write_record<T: RecordPayload + Serialize>(payload: T, backend_url: &Ur
     let index = create_record::<T>(backend_url, &payload).await?;
     println!(
         "Short link: {}",
-        backend_url.join(&format!(
-            "{}/{}",
-            payload.record_type().route_prefix(),
-            index
-        ))?,
+        backend_url.join(&format!("{}/{}", T::record_type().route_prefix(), index))?,
     );
     Ok(())
 }

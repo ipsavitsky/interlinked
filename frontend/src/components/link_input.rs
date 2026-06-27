@@ -1,7 +1,8 @@
-use leptos::{IntoView, component, html::Input, prelude::*, task::spawn_local, view};
-use shared::{new_object_schemes::NewLinkScheme, requests::create_record, routes::RecordType};
+use leptos::{IntoView, component, html::Input, prelude::*, view};
+use shared::new_object_schemes::NewLinkScheme;
 use url::Url;
-use web_sys::SubmitEvent;
+
+use crate::components::input_component::generate_input_component;
 
 #[component]
 pub fn LinkInputComponent(
@@ -9,41 +10,13 @@ pub fn LinkInputComponent(
     reload: Trigger,
     backend_url: Url,
 ) -> impl IntoView {
-    let (name, set_name) = signal(None::<String>);
     let input_element: NodeRef<Input> = NodeRef::new();
 
-    let on_submit = move |ev: SubmitEvent| {
-        ev.prevent_default();
-        let value = input_element.get().expect("<input> to exist").value();
-        let backend_url = backend_url.clone();
-        let value = Url::parse(&value).unwrap();
-        spawn_local(async move {
-            let ret = create_record(
-                &backend_url,
-                &NewLinkScheme {
-                    payload: value,
-                    challenge: payload.get_untracked().unwrap(),
-                },
-            )
-            .await;
-            reload.notify();
-            match ret {
-                Ok(link) => set_name.set(Some(
-                    backend_url
-                        .join(&format!("{}/{}", RecordType::Link.route_prefix(), link))
-                        .unwrap()
-                        .to_string(),
-                )),
-                Err(e) => set_name.set(Some(e.to_string())),
-            }
-        });
-    };
-
-    view! {
-        <form on:submit=on_submit>
-            <input type="text" value=name node_ref=input_element />
-            <input type="submit" value="Submit" disabled=move || payload.get().is_none() />
-        </form>
-        <p>"Link is: " {name}</p>
-    }
+    generate_input_component::<Input, NewLinkScheme>(
+        input_element,
+        view! {<input type="text" node_ref=input_element />},
+        payload,
+        reload,
+        backend_url,
+    )
 }

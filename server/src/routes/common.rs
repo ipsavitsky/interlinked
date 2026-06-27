@@ -38,7 +38,7 @@ pub async fn create_record<T: RecordPayload + Recordable>(
         let values = NewRecord {
             payload: body.get_payload(&state).await,
             challenge_proof: body.challenge().to_string(),
-            record_type: DbRecordType(body.record_type()),
+            record_type: DbRecordType(T::record_type()),
         };
 
         match diesel::insert_into(records::table)
