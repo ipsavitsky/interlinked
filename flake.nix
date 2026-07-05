@@ -96,7 +96,7 @@
               {
                 nativeBuildInputs = [
                   pkgs.trunk
-                  pkgs.wasm-bindgen-cli_0_2_121
+                  pkgs.wasm-bindgen-cli_0_2_126
                   pkgs.binaryen
                   rustToolchain
                 ];
