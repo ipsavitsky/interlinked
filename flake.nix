@@ -48,6 +48,7 @@
         packages = {
           cli = naersk-lib.buildPackage {
             pname = "cli";
+            version = "0.1.0";
             cargoBuildOptions =
               x:
               x
@@ -59,6 +60,7 @@
           };
           server = naersk-lib.buildPackage {
             pname = "server";
+            version = "0.1.0";
             cargoBuildOptions =
               x:
               x
@@ -77,6 +79,7 @@
               # Multi-step (default) so passthru.builtDependencies is populated.
               depsBuild = naersk-lib.buildPackage {
                 pname = "frontend-deps";
+                version = "0.1.0";
                 src = ./.;
                 cargoBuildOptions =
                   x:
