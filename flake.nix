@@ -19,7 +19,7 @@
       rust-overlay,
       treefmt-nix,
     }:
-    utils.lib.eachDefaultSystem (
+    utils.lib.eachSystem [ utils.lib.system.x86_64-linux utils.lib.system.aarch64-linux ] (
       system:
       let
         pkgs = import nixpkgs {
